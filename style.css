@@ -4,6 +4,7 @@
 
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html {
@@ -13,8 +14,12 @@ html {
 body {
     background-color: #131313;
     color: #e5e2e1;
-    min-height: max(884px, 100dvh);
+    min-height: max(100vh, 100dvh);
 }
+
+/* Suporte para telas com notch/safe-areas (iPhones novos) */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 
 img {
     -webkit-user-drag: none;
@@ -98,12 +103,13 @@ img {
 .library-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 @media (min-width: 768px) {
     .library-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
     }
 }
 
@@ -140,6 +146,14 @@ img {
     transition: opacity .25s ease;
 }
 
+/* No mobile, o overlay aparece direto para não precisar de hover */
+@media (max-width: 767px) {
+    .photo-overlay {
+        background: linear-gradient(to top, rgba(0,0,0,.85), transparent 60%);
+        opacity: 1; 
+    }
+}
+
 .photo-card:hover .photo-overlay,
 .photo-card:focus-within .photo-overlay {
     opacity: 1;
@@ -150,16 +164,19 @@ img {
     transform: translate(-50%, 0) !important;
 }
 
+/* Ajustes da tela de detalhe no mobile */
 @media (max-width: 767px) {
     .detail-actions {
         top: auto;
-        bottom: 8.5rem;
+        bottom: 2rem;
         right: 1rem;
         transform: none;
-        gap: .75rem;
+        flex-direction: row; /* Coloca os botões deitados lado a lado */
+        gap: 0.75rem;
     }
-
-    .detail-actions button span:last-child {
-        display: none;
+    
+    /* Mostrar as setas direcionais um pouco transparentes sempre na tela no mobile */
+    #detail-prev, #detail-next {
+        opacity: 0.6;
     }
 }
