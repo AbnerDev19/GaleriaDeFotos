@@ -1,10 +1,8 @@
 const STORAGE_KEY = 'canon-sync-gallery-v3';
 const IMPORT_HISTORY_KEY = 'canon-sync-imports-v3';
 
-// Começamos o app totalmente limpo, sem fotos fakes
 const seedPhotos = [];
 
-// Base de dados das Câmeras Principais
 const popularCameras = [
     { name: 'Canon EOS R5', type: 'Mirrorless Profissional', sensor: 'Full-Frame 45.0MP', mount: 'RF' },
     { name: 'Canon EOS R6 Mark II', type: 'Mirrorless Híbrida', sensor: 'Full-Frame 24.2MP', mount: 'RF' },
@@ -115,9 +113,9 @@ function renderLibrary() {
         const section = document.createElement('section');
         section.innerHTML = `
             <div class="flex items-center gap-4 mb-4">
-                <h2 class="font-headline text-lg font-bold text-on-surface capitalize">${formatLongDate(date)}</h2>
+                <h2 class="font-headline text-base md:text-lg font-bold text-on-surface capitalize">${formatLongDate(date)}</h2>
                 <div class="h-px flex-grow bg-outline-variant opacity-20"></div>
-                <span class="font-label text-xs text-on-surface-variant">${photos.length} item(s)</span>
+                <span class="font-label text-[10px] md:text-xs text-on-surface-variant">${photos.length} item(s)</span>
             </div>
             <div class="library-grid"></div>
         `;
@@ -134,15 +132,15 @@ function createPhotoCard(photo, currentList) {
     card.className = 'photo-card aspect-square text-left';
     card.innerHTML = `
         <img src="${photo.src}" alt="${escapeHtml(photo.name)}" loading="lazy" />
-        <div class="photo-overlay flex flex-col justify-between p-3">
-            <div class="self-end bg-black/40 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold tracking-tighter uppercase text-white">${photo.type}</div>
-            <div class="flex justify-between items-end gap-3 w-full">
-                <div>
-                    <div class="text-[10px] font-bold text-white uppercase tracking-widest">${formatShortDate(photo.date)}</div>
-                    <div class="text-xs text-white/80 truncate max-w-[10rem]">${escapeHtml(photo.label || photo.name)}</div>
+        <div class="photo-overlay flex flex-col justify-between p-2 md:p-3">
+            <div class="self-end bg-black/40 backdrop-blur-md px-1.5 md:px-2 py-0.5 md:py-1 rounded text-[8px] md:text-[10px] font-bold tracking-tighter uppercase text-white">${photo.type}</div>
+            <div class="flex justify-between items-end gap-2 w-full">
+                <div class="overflow-hidden">
+                    <div class="text-[8px] md:text-[10px] font-bold text-white uppercase tracking-widest">${formatShortDate(photo.date)}</div>
+                    <div class="text-[10px] md:text-xs text-white/80 truncate w-full">${escapeHtml(photo.label || photo.name)}</div>
                 </div>
-                <button type="button" class="favorite-toggle flex items-center justify-center text-white ${photo.favorite ? 'favorited' : ''}" aria-label="Favoritar">
-                    <span class="material-symbols-outlined ${photo.favorite ? 'filled-icon text-primary-container' : ''}">favorite</span>
+                <button type="button" class="favorite-toggle flex items-center justify-center text-white ${photo.favorite ? 'favorited' : ''} p-1" aria-label="Favoritar">
+                    <span class="material-symbols-outlined text-lg md:text-xl ${photo.favorite ? 'filled-icon text-primary-container' : ''}">favorite</span>
                 </button>
             </div>
         </div>
@@ -177,13 +175,14 @@ function renderFavorites() {
     favorites.forEach(photo => {
         const item = document.createElement('button');
         item.type = 'button';
-        item.className = `md:col-span-4 aspect-square group relative bg-surface-container overflow-hidden rounded-sm cursor-pointer text-left`;
+        // Col-span-1 garante 2 por linha no celular (pois o grid tem 2 colunas)
+        item.className = `col-span-1 md:col-span-4 aspect-square group relative bg-surface-container overflow-hidden rounded-sm cursor-pointer text-left`;
         item.innerHTML = `
             <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="${photo.src}" alt="${escapeHtml(photo.name)}" loading="lazy" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="absolute top-4 right-4">
-                <button type="button" class="favorite-toggle text-primary-container">
-                    <span class="material-symbols-outlined filled-icon">favorite</span>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute top-2 right-2 md:top-4 md:right-4">
+                <button type="button" class="favorite-toggle text-primary-container p-1">
+                    <span class="material-symbols-outlined filled-icon text-xl md:text-2xl">favorite</span>
                 </button>
             </div>
         `;
@@ -206,14 +205,14 @@ function renderCameras() {
     const grid = document.getElementById('cameras-grid');
     if (!grid) return;
     grid.innerHTML = popularCameras.map(cam => `
-        <div class="bg-surface-container p-6 rounded-lg border border-outline-variant/20 hover:border-primary-container transition-colors duration-300">
-            <div class="flex items-center justify-between mb-4">
-                <span class="material-symbols-outlined text-4xl text-surface-variant">photo_camera</span>
-                <span class="inline-block bg-surface-container-high px-2 py-1 rounded text-[10px] font-label uppercase tracking-widest text-primary">Montagem ${cam.mount}</span>
+        <div class="bg-surface-container p-5 md:p-6 rounded-lg border border-outline-variant/20 hover:border-primary-container transition-colors duration-300">
+            <div class="flex items-center justify-between mb-3 md:mb-4">
+                <span class="material-symbols-outlined text-3xl md:text-4xl text-surface-variant">photo_camera</span>
+                <span class="inline-block bg-surface-container-high px-2 py-1 rounded text-[9px] md:text-[10px] font-label uppercase tracking-widest text-primary">Montagem ${cam.mount}</span>
             </div>
-            <h3 class="font-headline text-xl font-bold mb-1">${cam.name}</h3>
-            <p class="text-sm text-on-surface-variant mb-2">${cam.type}</p>
-            <p class="text-xs font-mono text-on-surface/60">${cam.sensor}</p>
+            <h3 class="font-headline text-lg md:text-xl font-bold mb-1">${cam.name}</h3>
+            <p class="text-xs md:text-sm text-on-surface-variant mb-1 md:mb-2">${cam.type}</p>
+            <p class="text-[10px] md:text-xs font-mono text-on-surface/60">${cam.sensor}</p>
         </div>
     `).join('');
 }
@@ -224,10 +223,10 @@ function renderImportHistory() {
 
     if (!history.length) {
         importHistory.innerHTML = `
-            <div class="md:col-span-3 bg-surface-container p-8 text-center border border-outline-variant/10">
-                <span class="material-symbols-outlined text-5xl text-surface-variant mb-4">history</span>
-                <p class="font-headline text-xl font-bold mb-2">Sem importações</p>
-                <p class="text-sm text-on-surface-variant">Suas importações aparecerão aqui.</p>
+            <div class="col-span-1 sm:col-span-2 md:col-span-3 bg-surface-container p-6 md:p-8 text-center border border-outline-variant/10 rounded-lg">
+                <span class="material-symbols-outlined text-4xl md:text-5xl text-surface-variant mb-3">history</span>
+                <p class="font-headline text-lg md:text-xl font-bold mb-1">Sem importações</p>
+                <p class="text-xs md:text-sm text-on-surface-variant">Suas importações aparecerão aqui.</p>
             </div>
         `;
         return;
@@ -235,14 +234,14 @@ function renderImportHistory() {
 
     history.forEach(entry => {
         const card = document.createElement('div');
-        card.className = 'bg-surface-container p-6 flex flex-col justify-between h-40 hover:bg-surface-container-high transition-colors group';
+        card.className = 'bg-surface-container p-5 md:p-6 flex flex-col justify-between h-32 md:h-40 rounded-lg hover:bg-surface-container-high transition-colors group';
         card.innerHTML = `
             <div class="flex justify-between items-start gap-3">
-                <span class="font-label text-[10px] text-on-surface-variant uppercase">${formatShortDate(entry.date)}</span>
-                <span class="material-symbols-outlined text-primary-container filled-icon">verified</span>
+                <span class="font-label text-[9px] md:text-[10px] text-on-surface-variant uppercase">${formatShortDate(entry.date)}</span>
+                <span class="material-symbols-outlined text-primary-container filled-icon text-lg md:text-xl">verified</span>
             </div>
             <div>
-                <p class="font-headline text-2xl font-black mb-1">${entry.count} <span class="text-xs font-normal text-on-surface-variant">${entry.type}</span></p>
+                <p class="font-headline text-xl md:text-2xl font-black mb-1">${entry.count} <span class="text-[10px] md:text-xs font-normal text-on-surface-variant">${entry.type}</span></p>
             </div>
         `;
         importHistory.appendChild(card);
@@ -259,7 +258,8 @@ function switchTab(target) {
         const isActive = tab.dataset.tab === target;
         tab.classList.toggle('text-primary-container', isActive);
         tab.classList.toggle('text-on-surface-variant', !isActive);
-        tab.querySelector('.material-symbols-outlined').classList.toggle('filled-icon', isActive);
+        const icon = tab.querySelector('.material-symbols-outlined');
+        if(icon) icon.classList.toggle('filled-icon', isActive);
     });
 }
 
@@ -328,7 +328,7 @@ async function handleUpload(event) {
     savePhotos();
     renderAll();
     switchTab('library');
-    showToast(`${imageFiles.length} foto(s) importada(s) com sucesso.`);
+    showToast(`${imageFiles.length} foto(s) importada(s)`);
     event.target.value = '';
 }
 
@@ -404,7 +404,7 @@ function deleteCurrentPhoto() {
 
     if (!state.detailList.length) {
         closeDetail();
-        showToast('Foto removida da biblioteca.');
+        showToast('Foto removida');
         return;
     }
 
@@ -413,7 +413,7 @@ function deleteCurrentPhoto() {
     }
 
     renderDetail();
-    showToast('Foto removida da biblioteca.');
+    showToast('Foto removida');
 }
 
 function showToast(message) {
@@ -476,8 +476,8 @@ function bindEvents() {
         if (current) toggleFavorite(current.id);
     });
     document.getElementById('detail-delete').addEventListener('click', deleteCurrentPhoto);
-    document.getElementById('menu-button').addEventListener('click', () => showToast('Menu preparado.'));
-    document.getElementById('settings-button').addEventListener('click', () => showToast('Configurações preparadas.'));
+    document.getElementById('menu-button').addEventListener('click', () => showToast('Menu'));
+    document.getElementById('settings-button').addEventListener('click', () => showToast('Configurações'));
 
     document.addEventListener('keydown', event => {
         if (detailView.classList.contains('hidden')) return;
