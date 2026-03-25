@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CANON Sync - Library</title>
+    <title>CANON Sync - App</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,16 +63,15 @@
     <main id="view-library" class="view-section active pt-20 pb-28 px-4 md:px-8 max-w-7xl mx-auto">
         <div class="flex flex-col gap-6 mb-8">
             <div class="flex flex-col">
-                <h1 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface">Library</h1>
-                <p class="font-label text-sm text-on-surface-variant uppercase tracking-widest mt-1">All Photos</p>
+                <h1 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface">Biblioteca</h1>
+                <p class="font-label text-sm text-on-surface-variant uppercase tracking-widest mt-1">Todas as Fotos</p>
             </div>
 
             <div id="filter-chips" class="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
-                <button data-filter="all" class="filter-chip active-chip px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap">All Media</button>
+                <button data-filter="all" class="filter-chip active-chip px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap">Todas</button>
                 <button data-filter="raw" class="filter-chip px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap">RAW</button>
                 <button data-filter="jpg" class="filter-chip px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap">JPG</button>
-                <button data-filter="favorites" class="filter-chip px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap">Favorites</button>
-                <button data-filter="uploaded" class="filter-chip px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap">Imports</button>
+                <button data-filter="favorites" class="filter-chip px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap">Favoritos</button>
             </div>
         </div>
 
@@ -82,25 +81,34 @@
             <div class="max-w-md mx-auto bg-surface-container rounded-lg border border-outline-variant/20 px-6 py-10">
                 <span class="material-symbols-outlined text-6xl text-surface-variant mb-4">imagesmode</span>
                 <h2 class="font-headline text-2xl font-bold mb-2">Nada por aqui ainda</h2>
-                <p class="text-on-surface-variant text-sm">Importe fotos ou troque o filtro para visualizar a sua biblioteca.</p>
+                <p class="text-on-surface-variant text-sm">Vá na aba de importação para adicionar suas primeiras fotos.</p>
             </div>
         </div>
     </main>
 
     <main id="view-favorites" class="view-section pt-24 pb-32 px-6 max-w-7xl mx-auto">
         <div class="mb-12">
-            <h2 class="font-headline font-extrabold text-4xl md:text-6xl tracking-tight mb-2">My Favorites</h2>
-            <p id="favorites-subtitle" class="font-label text-on-surface-variant uppercase tracking-widest text-xs">Curated Selection</p>
+            <h2 class="font-headline font-extrabold text-4xl md:text-6xl tracking-tight mb-2">Favoritos</h2>
+            <p id="favorites-subtitle" class="font-label text-on-surface-variant uppercase tracking-widest text-xs">Sua Seleção</p>
         </div>
 
         <div id="favorites-grid" class="grid grid-cols-1 md:grid-cols-12 gap-6"></div>
 
         <div id="favorites-empty" class="hidden flex flex-col items-center justify-center py-40 text-center">
             <span class="material-symbols-outlined text-8xl text-surface-variant mb-6">heart_broken</span>
-            <h3 class="text-2xl font-bold font-headline mb-2">No Favorites Yet</h3>
-            <p class="text-on-surface-variant max-w-xs mx-auto">Start marking your best shots with the star icon to see them organized here.</p>
-            <button id="favorites-explore" class="mt-8 bg-primary-container text-white px-8 py-3 font-label font-bold uppercase tracking-widest text-sm active:scale-95 transition-transform rounded-md">Explore Gallery</button>
+            <h3 class="text-2xl font-bold font-headline mb-2">Nenhum favorito ainda</h3>
+            <p class="text-on-surface-variant max-w-xs mx-auto">Marque suas fotos preferidas com a estrela para vê-las aqui.</p>
+            <button id="favorites-explore" class="mt-8 bg-primary-container text-white px-8 py-3 font-label font-bold uppercase tracking-widest text-sm active:scale-95 transition-transform rounded-md">Explorar Galeria</button>
         </div>
+    </main>
+
+    <main id="view-cameras" class="view-section pt-24 pb-32 px-6 max-w-7xl mx-auto">
+        <div class="mb-12">
+            <h2 class="font-headline font-extrabold text-4xl tracking-tight mb-2">Principais Câmeras</h2>
+            <p class="font-label text-on-surface-variant uppercase tracking-widest text-xs">Modelos em Destaque</p>
+        </div>
+        <div id="cameras-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
     </main>
 
     <main id="view-import" class="view-section pt-24 pb-28 px-6 max-w-5xl mx-auto min-h-screen">
@@ -116,35 +124,24 @@
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-container opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-3 w-3 bg-primary-container"></span>
                         </span>
-                        <p id="import-status" class="font-label text-sm uppercase tracking-widest font-bold text-on-surface">Searching for camera...</p>
+                        <p id="import-status" class="font-label text-sm uppercase tracking-widest font-bold text-on-surface">Aguardando arquivos...</p>
                     </div>
                 </div>
             </div>
 
             <div class="flex flex-col gap-8">
                 <div>
-                    <h2 class="font-headline text-4xl font-extrabold tracking-tight mb-2 uppercase">Connect Device</h2>
-                    <p class="font-body text-on-surface-variant max-w-md">Selecione o método de conexão para começar a importar suas fotos mantendo o visual do projeto e com comportamento real.</p>
+                    <h2 class="font-headline text-4xl font-extrabold tracking-tight mb-2 uppercase">Adicionar Fotos</h2>
+                    <p class="font-body text-on-surface-variant max-w-md">Faça o upload dos seus arquivos reais para preencher a sua galeria e gerenciar seu portfólio.</p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4">
-                    <button id="wifi-button" class="group flex items-center justify-between p-6 bg-surface-container hover:bg-surface-container-high border-l-4 border-transparent hover:border-primary-container transition-all duration-300">
-                        <div class="flex items-center gap-6">
-                            <span class="material-symbols-outlined text-4xl group-hover:text-primary transition-colors">wifi</span>
-                            <div class="text-left">
-                                <h3 class="font-headline font-bold text-lg">Wi-Fi</h3>
-                                <p class="text-xs font-label text-on-surface-variant uppercase tracking-tighter">Fast wireless direct transfer</p>
-                            </div>
-                        </div>
-                        <span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-                    </button>
-
                     <label for="file-upload" class="group flex items-center justify-between p-6 bg-surface-container hover:bg-surface-container-high border-l-4 border-transparent hover:border-primary-container transition-all duration-300 cursor-pointer">
                         <div class="flex items-center gap-6">
-                            <span class="material-symbols-outlined text-4xl group-hover:text-primary transition-colors">usb</span>
+                            <span class="material-symbols-outlined text-4xl group-hover:text-primary transition-colors">upload_file</span>
                             <div class="text-left">
-                                <h3 class="font-headline font-bold text-lg">USB-C</h3>
-                                <p class="text-xs font-label text-on-surface-variant uppercase tracking-tighter">Ultra-fast tethered import</p>
+                                <h3 class="font-headline font-bold text-lg">Upload Manual</h3>
+                                <p class="text-xs font-label text-on-surface-variant uppercase tracking-tighter">Selecione arquivos do dispositivo</p>
                             </div>
                         </div>
                         <span class="material-symbols-outlined opacity-0 group-hover:opacity-100 transition-opacity">upload</span>
@@ -155,9 +152,9 @@
 
         <section class="mt-20">
             <div class="flex items-end justify-between mb-8 gap-4">
-                <h3 class="font-headline text-2xl font-bold uppercase tracking-tight">Recent Imports</h3>
+                <h3 class="font-headline text-2xl font-bold uppercase tracking-tight">Importações Recentes</h3>
                 <div class="h-px flex-grow bg-outline-variant opacity-20"></div>
-                <span class="font-label text-[10px] text-on-surface-variant uppercase font-medium whitespace-nowrap">History Log</span>
+                <span class="font-label text-[10px] text-on-surface-variant uppercase font-medium whitespace-nowrap">Histórico</span>
             </div>
 
             <div id="import-history" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
@@ -170,12 +167,9 @@
                 <button id="detail-back" class="p-2 rounded-full hover:bg-surface-variant/40 transition-colors active:scale-95 text-on-surface" aria-label="Voltar">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </button>
-                <h1 id="detail-filename" class="font-headline font-bold tracking-tight uppercase text-on-surface text-xs md:text-sm opacity-80 truncate max-w-[38vw] md:max-w-md">IMG_2024_0812.CR3</h1>
+                <h1 id="detail-filename" class="font-headline font-bold tracking-tight uppercase text-on-surface text-xs md:text-sm opacity-80 truncate max-w-[38vw] md:max-w-md"></h1>
             </div>
             <div class="flex items-center gap-2 pointer-events-auto">
-                <button id="detail-share" class="p-2 rounded-full hover:bg-surface-variant/40 transition-colors active:scale-95 text-on-surface" aria-label="Compartilhar">
-                    <span class="material-symbols-outlined">share</span>
-                </button>
                 <button id="detail-delete" class="p-2 rounded-full hover:bg-surface-variant/40 transition-colors active:scale-95 text-error" aria-label="Excluir">
                     <span class="material-symbols-outlined">delete</span>
                 </button>
@@ -195,106 +189,28 @@
                     <div class="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center glass-panel border border-outline-variant/20 group-hover:bg-primary-container group-hover:text-white transition-all">
                         <span id="detail-favorite-rail-icon" class="material-symbols-outlined text-2xl">favorite</span>
                     </div>
-                    <span class="font-label text-[10px] uppercase tracking-widest opacity-60">Favorite</span>
+                    <span class="font-label text-[10px] uppercase tracking-widest opacity-60">Favoritar</span>
                 </button>
-                <button id="detail-develop" class="group flex flex-col items-center gap-1 transition-transform active:scale-90">
-                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center glass-panel border border-outline-variant/20 hover:bg-surface-bright transition-all">
-                        <span class="material-symbols-outlined text-2xl">edit_note</span>
-                    </div>
-                    <span class="font-label text-[10px] uppercase tracking-widest opacity-60">Develop</span>
-                </button>
-                <button id="detail-focus" class="group flex flex-col items-center gap-1 transition-transform active:scale-90">
-                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center glass-panel border border-outline-variant/20 hover:bg-surface-bright transition-all">
-                        <span class="material-symbols-outlined text-2xl">crop_free</span>
-                    </div>
-                    <span class="font-label text-[10px] uppercase tracking-widest opacity-60">Focus</span>
-                </button>
-            </div>
-
-            <div class="absolute bottom-6 md:bottom-10 left-4 md:left-10 right-4 md:right-10 z-40">
-                <div class="glass-panel p-4 md:p-6 rounded-lg max-w-5xl mx-auto flex flex-col gap-4 md:flex-row md:justify-between md:items-end border border-outline-variant/10">
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary-container text-sm">photo_camera</span>
-                            <span id="detail-camera" class="font-headline text-xs font-black tracking-widest uppercase text-on-surface">Canon EOS R5</span>
-                        </div>
-                        <span id="detail-lens" class="font-label text-[10px] text-on-surface-variant uppercase tracking-tighter">RF 24-70mm f/2.8L IS USM @ 50mm</span>
-                    </div>
-
-                    <div class="grid grid-cols-4 gap-4 md:gap-12">
-                        <div class="flex flex-col">
-                            <span class="font-label text-[10px] text-on-surface-variant uppercase mb-1">Shutter</span>
-                            <span id="detail-shutter" class="font-headline text-xl md:text-2xl font-extrabold tracking-tighter text-on-surface">1/250 <span class="text-sm font-medium opacity-50">S</span></span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="font-label text-[10px] text-on-surface-variant uppercase mb-1">Aperture</span>
-                            <span id="detail-aperture" class="font-headline text-xl md:text-2xl font-extrabold tracking-tighter text-on-surface">ƒ/4.0</span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="font-label text-[10px] text-on-surface-variant uppercase mb-1">ISO</span>
-                            <span id="detail-iso" class="font-headline text-xl md:text-2xl font-extrabold tracking-tighter text-on-surface">100</span>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="font-label text-[10px] text-on-surface-variant uppercase mb-1">Exp</span>
-                            <span id="detail-exp" class="font-headline text-xl md:text-2xl font-extrabold tracking-tighter text-on-surface">−0.3</span>
-                        </div>
-                    </div>
-
-                    <div id="detail-histogram" class="hidden lg:flex items-end gap-[1px] h-10 w-32 opacity-40"></div>
-                </div>
             </div>
 
             <aside id="exif-panel" class="absolute right-0 top-0 h-full w-full max-w-[22rem] glass-panel border-l border-outline-variant/20 z-[80] translate-x-full transition-transform duration-500 ease-in-out flex flex-col">
                 <div class="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-high/40">
-                    <h2 class="font-headline font-bold uppercase tracking-widest text-sm text-on-surface">EXIF Data</h2>
+                    <h2 class="font-headline font-bold uppercase tracking-widest text-sm text-on-surface">Informações</h2>
                     <button id="close-exif" class="p-2 hover:bg-surface-variant/40 rounded-full transition-colors" aria-label="Fechar informações">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
                 <div class="flex-1 overflow-y-auto exif-scroll p-6 space-y-6">
                     <section>
-                        <h3 class="font-label text-[10px] uppercase tracking-[0.2em] text-primary-container font-black mb-4">Parameters</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/5">
-                                <span class="text-[9px] text-on-surface-variant uppercase block mb-1">Aperture</span>
-                                <span id="exif-aperture" class="text-lg font-headline font-bold">ƒ/4.0</span>
-                            </div>
-                            <div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/5">
-                                <span class="text-[9px] text-on-surface-variant uppercase block mb-1">Shutter</span>
-                                <span id="exif-shutter" class="text-lg font-headline font-bold">1/250s</span>
-                            </div>
-                            <div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/5">
-                                <span class="text-[9px] text-on-surface-variant uppercase block mb-1">ISO</span>
-                                <span id="exif-iso" class="text-lg font-headline font-bold">100</span>
-                            </div>
-                            <div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/5">
-                                <span class="text-[9px] text-on-surface-variant uppercase block mb-1">Type</span>
-                                <span id="exif-type" class="text-lg font-headline font-bold">RAW</span>
-                            </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3 class="font-label text-[10px] uppercase tracking-[0.2em] text-primary-container font-black mb-4">File Metadata</h3>
+                        <h3 class="font-label text-[10px] uppercase tracking-[0.2em] text-primary-container font-black mb-4">Dados do Arquivo</h3>
                         <div class="space-y-4">
                             <div class="flex justify-between items-baseline border-b border-outline-variant/10 pb-2 gap-4">
-                                <span class="text-xs text-on-surface-variant uppercase">File name</span>
+                                <span class="text-xs text-on-surface-variant uppercase">Arquivo</span>
                                 <span id="exif-name" class="text-[10px] font-mono text-on-surface text-right break-all">--</span>
                             </div>
                             <div class="flex justify-between items-baseline border-b border-outline-variant/10 pb-2 gap-4">
-                                <span class="text-xs text-on-surface-variant uppercase">Date</span>
+                                <span class="text-xs text-on-surface-variant uppercase">Data</span>
                                 <span id="exif-date" class="text-[10px] font-mono text-on-surface">--</span>
-                            </div>
-                            <div class="flex justify-between items-baseline border-b border-outline-variant/10 pb-2 gap-4">
-                                <span class="text-xs text-on-surface-variant uppercase">Camera</span>
-                                <span id="exif-camera" class="text-[10px] font-mono text-on-surface text-right">--</span>
-                            </div>
-                            <div class="flex justify-between items-baseline border-b border-outline-variant/10 pb-2 gap-4">
-                                <span class="text-xs text-on-surface-variant uppercase">Lens</span>
-                                <span id="exif-lens" class="text-[10px] font-mono text-on-surface text-right">--</span>
-                            </div>
-                            <div class="flex justify-between items-baseline border-b border-outline-variant/10 pb-2 gap-4">
-                                <span class="text-xs text-on-surface-variant uppercase">Origin</span>
-                                <span id="exif-origin" class="text-[10px] font-mono text-primary uppercase font-bold">Library</span>
                             </div>
                         </div>
                     </section>
@@ -316,22 +232,25 @@
     </section>
 
     <nav id="bottom-nav" class="fixed bottom-0 left-0 w-full flex justify-around items-center h-20 pb-4 px-4 bg-[#131313] border-t border-[#353534]/20 z-40 transition-transform duration-300">
-        <button data-tab="library" class="nav-tab flex flex-col items-center justify-center text-primary-container active:opacity-80 transition-all w-20">
+        <button data-tab="library" class="nav-tab flex flex-col items-center justify-center text-primary-container active:opacity-80 transition-all">
             <span class="material-symbols-outlined mb-1 filled-icon">photo_library</span>
-            <span class="font-body text-[10px] font-medium uppercase tracking-tighter">Library</span>
+            <span class="font-body text-[10px] font-medium uppercase tracking-tighter">Galeria</span>
         </button>
-        <button data-tab="favorites" class="nav-tab flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all w-20">
+        <button data-tab="favorites" class="nav-tab flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all">
             <span class="material-symbols-outlined mb-1">favorite</span>
-            <span class="font-body text-[10px] font-medium uppercase tracking-tighter">Favorites</span>
+            <span class="font-body text-[10px] font-medium uppercase tracking-tighter">Favoritos</span>
         </button>
-        <button data-tab="import" class="nav-tab flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all w-20">
+        <button data-tab="cameras" class="nav-tab flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all">
+            <span class="material-symbols-outlined mb-1">photo_camera</span>
+            <span class="font-body text-[10px] font-medium uppercase tracking-tighter">Câmeras</span>
+        </button>
+        <button data-tab="import" class="nav-tab flex flex-col items-center justify-center text-on-surface-variant hover:text-on-surface transition-all">
             <span class="material-symbols-outlined mb-1">add_a_photo</span>
-            <span class="font-body text-[10px] font-medium uppercase tracking-tighter">Import</span>
+            <span class="font-body text-[10px] font-medium uppercase tracking-tighter">Upload</span>
         </button>
     </nav>
 
     <input type="file" id="file-upload" accept="image/*" multiple class="hidden" />
-
     <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-24 px-4 py-3 rounded-full bg-surface-container-high text-on-surface text-sm shadow-soft border border-outline-variant/20 opacity-0 pointer-events-none transition-all duration-300 z-[90]"></div>
 
     <script src="script.js"></script>
