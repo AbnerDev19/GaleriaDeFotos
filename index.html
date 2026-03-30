@@ -10,7 +10,6 @@
 </head>
 <body>
 
-  <!-- NAV -->
   <nav class="nav">
     <a href="index.html" class="logo">OBSCURA</a>
     <div class="nav-links">
@@ -19,7 +18,6 @@
     </div>
   </nav>
 
-  <!-- HERO -->
   <header class="hero">
     <div class="hero-text">
       <span class="hero-eyebrow">Arquivo Visual</span>
@@ -30,16 +28,18 @@
     <div class="hero-lines"></div>
   </header>
 
-  <!-- FILTROS -->
   <section class="filters-bar">
     <button class="filter-btn active" data-filter="all">Todos</button>
     <button class="filter-btn" data-filter="retrato">Retrato</button>
     <button class="filter-btn" data-filter="urbano">Urbano</button>
     <button class="filter-btn" data-filter="natureza">Natureza</button>
     <button class="filter-btn" data-filter="evento">Evento</button>
+    
+    <select id="filter-author" class="field-input field-select" style="width: auto; margin-left: auto; padding: 6px 36px 6px 14px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">
+      <option value="all">Todos os Fotógrafos</option>
+    </select>
   </section>
 
-  <!-- GALERIA -->
   <main class="gallery" id="gallery">
     <div class="gallery-loading" id="gallery-loading">
       <div class="spinner"></div>
@@ -51,7 +51,6 @@
     </div>
   </main>
 
-  <!-- LIGHTBOX -->
   <div class="lightbox" id="lightbox">
     <button class="lightbox-close" id="lb-close">✕</button>
     <button class="lightbox-prev" id="lb-prev">‹</button>
@@ -66,14 +65,12 @@
     </div>
   </div>
 
-  <!-- FOOTER -->
   <footer class="footer">
     <span class="footer-logo">OBSCURA</span>
     <span class="footer-copy">© 2025 — Todos os direitos reservados</span>
     <a href="pages/login.html" class="footer-link">Acesso Fotógrafo</a>
   </footer>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -83,12 +80,14 @@
     const db = getFirestore(app);
 
     let allPhotos = [];
+    let currentFilteredPhotos = [];
     let currentIndex = 0;
+    
     let activeFilter = "all";
+    let activeAuthor = "all";
 
     async function loadGallery() {
       const loading = document.getElementById("gallery-loading");
-      const grid = document.getElementById("gallery-grid");
       const empty = document.getElementById("gallery-empty");
 
       try {
@@ -103,6 +102,7 @@
           return;
         }
 
+        populateAuthors();
         renderGrid(allPhotos);
       } catch (e) {
         loading.innerHTML = `<span style="color:var(--red)">Erro ao carregar. Verifique a configuração do Firebase.</span>`;
@@ -110,20 +110,39 @@
       }
     }
 
+    function populateAuthors() {
+      const select = document.getElementById("filter-author");
+      const authors = [...new Set(allPhotos.map(p => p.authorName))].filter(Boolean);
+
+      authors.forEach(author => {
+        const option = document.createElement("option");
+        option.value = author;
+        option.textContent = author;
+        select.appendChild(option);
+      });
+
+      select.addEventListener("change", (e) => {
+        activeAuthor = e.target.value;
+        renderGrid(allPhotos);
+      });
+    }
+
     function renderGrid(photos) {
       const grid = document.getElementById("gallery-grid");
       grid.innerHTML = "";
 
-      const filtered = activeFilter === "all"
-        ? photos
-        : photos.filter(p => p.category === activeFilter);
+      currentFilteredPhotos = photos.filter(p => {
+        const matchCategory = activeFilter === "all" || p.category === activeFilter;
+        const matchAuthor = activeAuthor === "all" || p.authorName === activeAuthor;
+        return matchCategory && matchAuthor;
+      });
 
-      if (filtered.length === 0) {
-        grid.innerHTML = `<div class="no-result">Nenhuma foto nesta categoria.</div>`;
+      if (currentFilteredPhotos.length === 0) {
+        grid.innerHTML = `<div class="no-result">Nenhuma foto encontrada com estes filtros.</div>`;
         return;
       }
 
-      filtered.forEach((photo, i) => {
+      currentFilteredPhotos.forEach((photo, i) => {
         const card = document.createElement("div");
         card.className = "photo-card";
         card.dataset.index = i;
@@ -137,7 +156,7 @@
             </div>
           </div>
         `;
-        card.addEventListener("click", () => openLightbox(filtered, i));
+        card.addEventListener("click", () => openLightbox(currentFilteredPhotos, i));
         grid.appendChild(card);
       });
     }
@@ -164,15 +183,15 @@
     });
 
     document.getElementById("lb-prev").addEventListener("click", () => {
-      const filtered = activeFilter === "all" ? allPhotos : allPhotos.filter(p => p.category === activeFilter);
-      currentIndex = (currentIndex - 1 + filtered.length) % filtered.length;
-      updateLightbox(filtered, currentIndex);
+      if(currentFilteredPhotos.length === 0) return;
+      currentIndex = (currentIndex - 1 + currentFilteredPhotos.length) % currentFilteredPhotos.length;
+      updateLightbox(currentFilteredPhotos, currentIndex);
     });
 
     document.getElementById("lb-next").addEventListener("click", () => {
-      const filtered = activeFilter === "all" ? allPhotos : allPhotos.filter(p => p.category === activeFilter);
-      currentIndex = (currentIndex + 1) % filtered.length;
-      updateLightbox(filtered, currentIndex);
+      if(currentFilteredPhotos.length === 0) return;
+      currentIndex = (currentIndex + 1) % currentFilteredPhotos.length;
+      updateLightbox(currentFilteredPhotos, currentIndex);
     });
 
     document.querySelectorAll(".filter-btn").forEach(btn => {
