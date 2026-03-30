@@ -38,28 +38,33 @@
       <section class="dash-tab active" id="tab-upload">
         <div class="tab-header">
           <h2 class="tab-title">Nova Foto</h2>
-          <p class="tab-desc">Escolha a foto. Ela irá direto para o seu Google Drive.</p>
+          <p class="tab-desc">Faça o upload de uma ou várias fotos para o Google Drive.</p>
         </div>
 
         <div class="upload-form">
           <div class="field">
-            <label class="field-label">Título da Foto</label>
-            <input type="text" id="up-title" class="field-input" placeholder="Ex: Pôr do Sol no Cerrado"/>
+            <label class="field-label">Título (Base)</label>
+            <input type="text" id="up-title" class="field-input" placeholder="Ex: Ensaio Urbano (Serão numeradas auto se forem várias)"/>
           </div>
 
           <div class="field">
-            <label class="field-label">Pasta / Categoria</label>
-            <input type="text" id="up-category" class="field-input" placeholder="Ex: Casamentos 2024, Ensaios..."/>
+            <label class="field-label">Pasta / Categoria no Site</label>
+            <div style="display: flex; gap: 8px;">
+              <select id="up-category" class="field-input field-select">
+                <option value="">Carregando pastas...</option>
+              </select>
+              <button type="button" id="btn-new-folder" class="btn-secondary" style="padding: 0 16px; white-space: nowrap;">+ Nova</button>
+            </div>
           </div>
 
           <div class="field">
-            <label class="field-label">Selecione a Imagem</label>
-            <input type="file" id="up-file" class="field-input" accept="image/*" style="padding: 7px 10px; cursor: pointer;"/>
+            <label class="field-label">Selecione as Imagens</label>
+            <input type="file" id="up-file" class="field-input" accept="image/*" multiple style="padding: 7px 10px; cursor: pointer;"/>
           </div>
 
           <div class="preview-area" id="preview-area" style="display:none">
-            <span class="preview-label">Pré-visualização</span>
-            <img id="preview-img" src="" alt="preview"/>
+            <span class="preview-label">Pré-visualização (<span id="preview-count">0</span> fotos)</span>
+            <div id="preview-grid" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
           </div>
 
           <div class="error-msg" id="up-error"></div>
@@ -100,8 +105,8 @@
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { FIREBASE_CONFIG } from "../js/config.js";
 
-    // O SEU ROBÔ DO GOOGLE DRIVE ESTÁ AQUI
-   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwe-V-4fdjJWN-VK3tnHemwS4XgrsugMWZiDgH4yno8CCcUYhGOAu0O_9VWVCEblql-/exec";
+    // ⚠️ ATENÇÃO: COLOQUE AQUI O NOVO LINK QUE GEROU NO PASSO 1
+    const APPS_SCRIPT_URL = "COLE_AQUI_SEU_NOVO_LINK_DO_ROBO_APPS_SCRIPT";
 
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
@@ -109,7 +114,7 @@
 
     let currentUser = null;
     let deleteTarget = null;
-    let selectedFile = null;
+    let selectedFiles = [];
 
     onAuthStateChanged(auth, user => {
       if (!user) { window.location.href = "login.html"; return; }
@@ -118,6 +123,32 @@
       document.getElementById("sidebar-name").textContent = user.displayName || "Fotógrafo";
       document.getElementById("sidebar-email").textContent = user.email;
       document.getElementById("sidebar-avatar").textContent = (user.displayName || user.email)[0].toUpperCase();
+      
+      loadFolders();
+    });
+
+    async function loadFolders() {
+      const sel = document.getElementById("up-category");
+      try {
+        const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid));
+        const snap = await getDocs(q);
+        const folders = new Set();
+        snap.docs.forEach(d => { if(d.data().category) folders.add(d.data().category); });
+        
+        sel.innerHTML = '<option value="">Selecione uma pasta...</option>';
+        folders.forEach(f => { sel.innerHTML += `<option value="${f}">${f}</option>`; });
+      } catch(e) {
+        sel.innerHTML = '<option value="">Erro ao carregar pastas</option>';
+      }
+    }
+
+    document.getElementById("btn-new-folder").addEventListener("click", () => {
+      const nova = prompt("Escreva o nome da Nova Pasta/Categoria no site:");
+      if (nova && nova.trim() !== "") {
+        const sel = document.getElementById("up-category");
+        sel.innerHTML += `<option value="${nova.trim()}">${nova.trim()}</option>`;
+        sel.value = nova.trim(); 
+      }
     });
 
     document.getElementById("btn-logout").addEventListener("click", async () => {
@@ -137,89 +168,109 @@
       });
     });
 
-    // Preview Local
     document.getElementById("up-file").addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        selectedFile = file;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          document.getElementById("preview-img").src = evt.target.result;
-          document.getElementById("preview-area").style.display = "block";
-        };
-        reader.readAsDataURL(file);
+      selectedFiles = Array.from(e.target.files);
+      const grid = document.getElementById("preview-grid");
+      const area = document.getElementById("preview-area");
+      
+      grid.innerHTML = "";
+      document.getElementById("preview-count").textContent = selectedFiles.length;
+
+      if (selectedFiles.length > 0) {
+        area.style.display = "block";
+        selectedFiles.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const img = document.createElement("img");
+            img.src = evt.target.result;
+            img.style.cssText = "width:70px; height:70px; object-fit:cover; border-radius:4px; border:1px solid var(--black-5);";
+            grid.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      } else {
+        area.style.display = "none";
       }
     });
 
-    // UPLOAD PARA O GOOGLE DRIVE VIA APPS SCRIPT
+    const readFileAsBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
+
     document.getElementById("btn-publish").addEventListener("click", async () => {
-      const title = document.getElementById("up-title").value.trim();
-      const category = document.getElementById("up-category").value.trim();
+      const titleBase = document.getElementById("up-title").value.trim();
+      const category = document.getElementById("up-category").value;
       const err = document.getElementById("up-error");
       const info = document.getElementById("up-info");
       err.textContent = ""; info.textContent = "";
 
-      if (!title || !category || !selectedFile) { err.textContent = "Preencha tudo e selecione uma imagem."; return; }
+      if (!titleBase) { err.textContent = "Insira um título base."; return; }
+      if (!category) { err.textContent = "Selecione ou crie uma pasta."; return; }
+      if (selectedFiles.length === 0) { err.textContent = "Selecione pelo menos uma imagem."; return; }
+
+      const btn = document.getElementById("btn-publish");
+      btn.disabled = true;
 
       try {
-        const btn = document.getElementById("btn-publish");
-        btn.textContent = "A Enviar para o Drive...";
-        btn.disabled = true;
+        let sucessos = 0;
 
-        const reader = new FileReader();
-        reader.onload = async function() {
-          const base64Data = reader.result.split(',')[1];
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          btn.textContent = `A Enviar Foto ${i + 1} de ${selectedFiles.length}...`;
           
-          try {
-            const response = await fetch(APPS_SCRIPT_URL, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-              body: JSON.stringify({
-                base64: base64Data,
-                fileName: selectedFile.name,
-                mimeType: selectedFile.type
-              })
-            });
+          const title = selectedFiles.length > 1 ? `${titleBase} (${i + 1}/${selectedFiles.length})` : titleBase;
+          const base64Data = await readFileAsBase64(file);
 
-            const result = await response.json();
+          const response = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" }, 
+            body: JSON.stringify({
+              base64: base64Data,
+              fileName: file.name,
+              mimeType: file.type,
+              authorName: currentUser.displayName || currentUser.email // ENVIANDO NOME DO FOTÓGRAFO
+            })
+          });
 
-            if (!result.success) throw new Error(result.error);
+          const result = await response.json();
+          if (!result.success) throw new Error(result.error);
 
-            btn.textContent = "A Guardar na Galeria...";
-            
-            const driveThumbnailUrl = `https://drive.google.com/thumbnail?id=${result.id}&sz=w1200`;
+          const driveThumbnailUrl = `https://drive.google.com/thumbnail?id=${result.id}&sz=w1200`;
 
-            await addDoc(collection(db, "photos"), {
-              title,
-              category,
-              driveUrl: driveThumbnailUrl,
-              driveId: result.id,
-              authorName: currentUser.displayName || currentUser.email,
-              authorId: currentUser.uid,
-              createdAt: serverTimestamp(),
-              isVisible: true
-            });
+          await addDoc(collection(db, "photos"), {
+            title,
+            category,
+            driveUrl: driveThumbnailUrl,
+            driveId: result.id,
+            authorName: currentUser.displayName || currentUser.email,
+            authorId: currentUser.uid,
+            createdAt: serverTimestamp(),
+            isVisible: true
+          });
+          
+          sucessos++;
+        }
 
-            info.textContent = "✓ Foto enviada e publicada!";
-            document.getElementById("up-title").value = "";
-            document.getElementById("up-category").value = "";
-            document.getElementById("up-file").value = "";
-            selectedFile = null;
-            document.getElementById("preview-area").style.display = "none";
-          } catch(apiError) {
-            err.textContent = "Erro na ligação ao Drive. Tente novamente.";
-            console.error(apiError);
-          } finally {
-            btn.textContent = "Fazer Upload e Publicar";
-            btn.disabled = false;
-          }
-        };
-        reader.readAsDataURL(selectedFile);
+        info.textContent = `✓ ${sucessos} foto(s) publicada(s) com sucesso!`;
+        document.getElementById("up-title").value = "";
+        document.getElementById("up-category").value = "";
+        document.getElementById("up-file").value = "";
+        selectedFiles = [];
+        document.getElementById("preview-area").style.display = "none";
+        
+        loadFolders();
 
       } catch(e) {
-        err.textContent = "Erro ao ler ficheiro.";
-        document.getElementById("btn-publish").disabled = false;
+        err.textContent = "Ocorreu um erro durante os uploads. Veja a consola.";
         console.error(e);
+      } finally {
+        btn.textContent = "Fazer Upload e Publicar";
+        btn.disabled = false;
       }
     });
 
@@ -227,12 +278,10 @@
       const grid = document.getElementById("my-grid");
       grid.innerHTML = `<div class="gallery-loading"><div class="spinner"></div><span>Carregando...</span></div>`;
       try {
-        // Agora ordenamos as fotos direto no código (JS) para evitar que o Firebase bloqueie por falta de Índices
         const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid));
         const snap = await getDocs(q);
         let photos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // Ordenando da mais nova para a mais antiga
         photos.sort((a, b) => {
           const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
           const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
