@@ -168,7 +168,7 @@
         card.dataset.index = i;
         card.innerHTML = `
           <div class="card-img-wrap">
-            <img src="${photo.imageUrl}" alt="${photo.title}" loading="lazy" />
+            <img src="${photo.driveUrl}" alt="${photo.title}" loading="lazy" />
             <div class="card-overlay">
               <span class="card-category">${photo.category || ""}</span>
               <span class="card-title">${photo.title}</span>
@@ -190,7 +190,7 @@
 
     function updateLightbox(photos, index) {
       const p = photos[index];
-      document.getElementById("lb-img").src = p.imageUrl;
+      document.getElementById("lb-img").src = p.driveUrl;
       document.getElementById("lb-title").textContent = p.title;
       document.getElementById("lb-author").textContent = "por " + p.authorName;
       document.getElementById("lb-date").textContent = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString("pt-BR") : "";
