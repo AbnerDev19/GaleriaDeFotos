@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OBSCURA — Galeria</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="index.html" class="logo">OBSCURA</a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">Galeria</a>
+      <a href="pages/login.html" class="nav-link">Área do Fotógrafo</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-text">
+      <span class="hero-eyebrow">Arquivo Visual</span>
+      <h1 class="hero-title">OBSCURA</h1>
+      <p class="hero-sub">Fotografias que habitam a sombra e a luz.</p>
+    </div>
+    <div class="hero-grain"></div>
+    <div class="hero-lines"></div>
+  </header>
+
+  <!-- FILTROS -->
+  <section class="filters-bar">
+    <button class="filter-btn active" data-filter="all">Todos</button>
+    <button class="filter-btn" data-filter="retrato">Retrato</button>
+    <button class="filter-btn" data-filter="urbano">Urbano</button>
+    <button class="filter-btn" data-filter="natureza">Natureza</button>
+    <button class="filter-btn" data-filter="evento">Evento</button>
+  </section>
+
+  <!-- GALERIA -->
+  <main class="gallery" id="gallery">
+    <div class="gallery-loading" id="gallery-loading">
+      <div class="spinner"></div>
+      <span>Carregando imagens...</span>
+    </div>
+    <div class="gallery-grid" id="gallery-grid"></div>
+    <div class="gallery-empty" id="gallery-empty" style="display:none;">
+      <p>Nenhuma foto ainda. <a href="pages/login.html">Fotógrafos, façam login</a> para publicar.</p>
+    </div>
+  </main>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lb-close">✕</button>
+    <button class="lightbox-prev" id="lb-prev">‹</button>
+    <button class="lightbox-next" id="lb-next">›</button>
+    <div class="lightbox-inner">
+      <img src="" alt="" id="lb-img"/>
+      <div class="lightbox-info">
+        <span class="lb-title" id="lb-title"></span>
+        <span class="lb-author" id="lb-author"></span>
+        <span class="lb-date" id="lb-date"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span class="footer-logo">OBSCURA</span>
+    <span class="footer-copy">© 2025 — Todos os direitos reservados</span>
+    <a href="pages/login.html" class="footer-link">Acesso Fotógrafo</a>
+  </footer>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { FIREBASE_CONFIG } from "../js/config.js";
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db = getFirestore(app);
+
+    let allPhotos = [];
+    let currentIndex = 0;
+    let activeFilter = "all";
+
+    async function loadGallery() {
+      const loading = document.getElementById("gallery-loading");
+      const grid = document.getElementById("gallery-grid");
+      const empty = document.getElementById("gallery-empty");
+
+      try {
+        const q = query(collection(db, "photos"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        allPhotos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        loading.style.display = "none";
+
+        if (allPhotos.length === 0) {
+          empty.style.display = "block";
+          return;
+        }
+
+        renderGrid(allPhotos);
+      } catch (e) {
+        loading.innerHTML = `<span style="color:var(--red)">Erro ao carregar. Verifique a configuração do Firebase.</span>`;
+        console.error(e);
+      }
+    }
+
+    function renderGrid(photos) {
+      const grid = document.getElementById("gallery-grid");
+      grid.innerHTML = "";
+
+      const filtered = activeFilter === "all"
+        ? photos
+        : photos.filter(p => p.category === activeFilter);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="no-result">Nenhuma foto nesta categoria.</div>`;
+        return;
+      }
+
+      filtered.forEach((photo, i) => {
+        const card = document.createElement("div");
+        card.className = "photo-card";
+        card.dataset.index = i;
+        card.innerHTML = `
+          <div class="card-img-wrap">
+            <img src="${photo.driveUrl}" alt="${photo.title}" loading="lazy" />
+            <div class="card-overlay">
+              <span class="card-category">${photo.category || ""}</span>
+              <span class="card-title">${photo.title}</span>
+              <span class="card-author">${photo.authorName}</span>
+            </div>
+          </div>
+        `;
+        card.addEventListener("click", () => openLightbox(filtered, i));
+        grid.appendChild(card);
+      });
+    }
+
+    function openLightbox(photos, index) {
+      currentIndex = index;
+      const lb = document.getElementById("lightbox");
+      lb.classList.add("active");
+      updateLightbox(photos, index);
+    }
+
+    function updateLightbox(photos, index) {
+      const p = photos[index];
+      document.getElementById("lb-img").src = p.driveUrl;
+      document.getElementById("lb-title").textContent = p.title;
+      document.getElementById("lb-author").textContent = "por " + p.authorName;
+      document.getElementById("lb-date").textContent = p.createdAt?.toDate
+        ? p.createdAt.toDate().toLocaleDateString("pt-BR")
+        : "";
+    }
+
+    document.getElementById("lb-close").addEventListener("click", () => {
+      document.getElementById("lightbox").classList.remove("active");
+    });
+
+    document.getElementById("lb-prev").addEventListener("click", () => {
+      const filtered = activeFilter === "all" ? allPhotos : allPhotos.filter(p => p.category === activeFilter);
+      currentIndex = (currentIndex - 1 + filtered.length) % filtered.length;
+      updateLightbox(filtered, currentIndex);
+    });
+
+    document.getElementById("lb-next").addEventListener("click", () => {
+      const filtered = activeFilter === "all" ? allPhotos : allPhotos.filter(p => p.category === activeFilter);
+      currentIndex = (currentIndex + 1) % filtered.length;
+      updateLightbox(filtered, currentIndex);
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeFilter = btn.dataset.filter;
+        renderGrid(allPhotos);
+      });
+    });
+
+    document.getElementById("lightbox").addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove("active");
+    });
+
+    loadGallery();
+  </script>
+</body>
+</html>

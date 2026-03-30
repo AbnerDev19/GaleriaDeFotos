@@ -1,0 +1,23 @@
+// ============================================================
+// FIRESTORE SECURITY RULES
+// Cole estas regras em:
+// Firebase Console > Firestore > Regras
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Qualquer pessoa pode LER as fotos (galeria pública)
+    // Apenas usuários autenticados podem CRIAR
+    // Apenas o próprio autor pode DELETAR
+    match /photos/{photoId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.authorId;
+      allow update: if request.auth != null
+                    && request.auth.uid == resource.data.authorId;
+    }
+  }
+}

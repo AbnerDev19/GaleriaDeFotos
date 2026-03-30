@@ -1,0 +1,115 @@
+/* ---- LOGIN PAGE ---- */
+
+.page-login {
+  background: var(--black);
+  min-height: 100vh;
+}
+
+.login-wrap {
+  padding-top: 60px;
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+}
+
+.login-deco {
+  width: 340px;
+  flex-shrink: 0;
+  background: var(--black-2);
+  border-right: 1px solid var(--black-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.deco-text {
+  font-family: var(--font-display);
+  font-size: 88px;
+  line-height: 0.88;
+  letter-spacing: 3px;
+  color: var(--black-4);
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  user-select: none;
+}
+
+.deco-line {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--red-dim), transparent);
+}
+
+.login-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 80px;
+  max-width: 520px;
+}
+
+.login-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+}
+
+#form-login,
+#form-register {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field-pw { position: relative; }
+.field-pw .field-input { padding-right: 44px; }
+
+.pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--transition);
+}
+.pw-toggle:hover { opacity: 1; }
+
+.login-switch {
+  font-size: 12px;
+  color: var(--white-faint);
+  text-align: center;
+  margin-top: -4px;
+}
+.login-switch a {
+  color: var(--red-light);
+  transition: color var(--transition);
+}
+.login-switch a:hover { color: var(--white); }
+
+@media (max-width: 900px) {
+  .login-deco { display: none; }
+  .login-box { padding: 40px 28px; }
+}

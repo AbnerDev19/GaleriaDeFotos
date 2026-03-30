@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OBSCURA — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/login.css"/>
+</head>
+<body class="page-login">
+
+  <nav class="nav">
+    <a href="../index.html" class="logo">OBSCURA</a>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link">Galeria</a>
+      <a href="login.html" class="nav-link active">Login</a>
+    </div>
+  </nav>
+
+  <div class="login-wrap">
+    <div class="login-deco">
+      <div class="deco-text">FOTO<br/>GRA<br/>FIA</div>
+      <div class="deco-line"></div>
+    </div>
+
+    <div class="login-box">
+      <div class="login-header">
+        <span class="login-eyebrow">Área Restrita</span>
+        <h1 class="login-title">Acesso<br/>Fotógrafo</h1>
+      </div>
+
+      <!-- FORM LOGIN -->
+      <div id="form-login">
+        <div class="field">
+          <label class="field-label">E-mail</label>
+          <input type="email" id="login-email" class="field-input" placeholder="seu@email.com"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Senha</label>
+          <div class="field-pw">
+            <input type="password" id="login-password" class="field-input" placeholder="••••••••"/>
+            <button class="pw-toggle" id="pw-toggle" type="button">👁</button>
+          </div>
+        </div>
+        <div class="error-msg" id="login-error"></div>
+        <button class="btn-primary" id="btn-login">Entrar</button>
+        <p class="login-switch">
+          Não tem conta? <a href="#" id="go-register">Cadastre-se</a>
+        </p>
+      </div>
+
+      <!-- FORM REGISTRO -->
+      <div id="form-register" style="display:none">
+        <div class="field">
+          <label class="field-label">Nome completo</label>
+          <input type="text" id="reg-name" class="field-input" placeholder="Seu nome"/>
+        </div>
+        <div class="field">
+          <label class="field-label">E-mail</label>
+          <input type="email" id="reg-email" class="field-input" placeholder="seu@email.com"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Senha</label>
+          <input type="password" id="reg-password" class="field-input" placeholder="mín. 6 caracteres"/>
+        </div>
+        <div class="error-msg" id="reg-error"></div>
+        <div class="info-msg" id="reg-info"></div>
+        <button class="btn-primary" id="btn-register">Criar Conta</button>
+        <p class="login-switch">
+          Já tem conta? <a href="#" id="go-login">Fazer login</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { FIREBASE_CONFIG } from "../js/config.js";
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+
+    // Toggle senha
+    document.getElementById("pw-toggle").addEventListener("click", () => {
+      const inp = document.getElementById("login-password");
+      inp.type = inp.type === "password" ? "text" : "password";
+    });
+
+    // Alternar formulários
+    document.getElementById("go-register").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("form-login").style.display = "none";
+      document.getElementById("form-register").style.display = "block";
+    });
+    document.getElementById("go-login").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("form-register").style.display = "none";
+      document.getElementById("form-login").style.display = "block";
+    });
+
+    // LOGIN
+    document.getElementById("btn-login").addEventListener("click", async () => {
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const err = document.getElementById("login-error");
+      err.textContent = "";
+
+      if (!email || !password) { err.textContent = "Preencha todos os campos."; return; }
+
+      try {
+        document.getElementById("btn-login").textContent = "Entrando...";
+        await signInWithEmailAndPassword(auth, email, password);
+        window.location.href = "dashboard.html";
+      } catch (e) {
+        const msgs = {
+          "auth/user-not-found": "Usuário não encontrado.",
+          "auth/wrong-password": "Senha incorreta.",
+          "auth/invalid-email": "E-mail inválido.",
+          "auth/too-many-requests": "Muitas tentativas. Tente mais tarde."
+        };
+        err.textContent = msgs[e.code] || "Erro ao entrar. Tente novamente.";
+        document.getElementById("btn-login").textContent = "Entrar";
+      }
+    });
+
+    // REGISTRO
+    document.getElementById("btn-register").addEventListener("click", async () => {
+      const name = document.getElementById("reg-name").value.trim();
+      const email = document.getElementById("reg-email").value.trim();
+      const password = document.getElementById("reg-password").value;
+      const err = document.getElementById("reg-error");
+      const info = document.getElementById("reg-info");
+      err.textContent = ""; info.textContent = "";
+
+      if (!name || !email || !password) { err.textContent = "Preencha todos os campos."; return; }
+      if (password.length < 6) { err.textContent = "Senha deve ter mínimo 6 caracteres."; return; }
+
+      try {
+        document.getElementById("btn-register").textContent = "Criando conta...";
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: name });
+        info.textContent = "Conta criada! Redirecionando...";
+        setTimeout(() => window.location.href = "dashboard.html", 1200);
+      } catch (e) {
+        const msgs = {
+          "auth/email-already-in-use": "Este e-mail já está cadastrado.",
+          "auth/invalid-email": "E-mail inválido.",
+          "auth/weak-password": "Senha muito fraca."
+        };
+        err.textContent = msgs[e.code] || "Erro ao criar conta.";
+        document.getElementById("btn-register").textContent = "Criar Conta";
+      }
+    });
+  </script>
+</body>
+</html>
