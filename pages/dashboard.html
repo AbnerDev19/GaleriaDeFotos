@@ -97,7 +97,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { FIREBASE_CONFIG } from "../js/config.js";
 
     // O SEU ROBÔ DO GOOGLE DRIVE ESTÁ AQUI
@@ -171,10 +171,9 @@
           const base64Data = reader.result.split(',')[1];
           
           try {
-            // Envia para o Google Apps Script
             const response = await fetch(APPS_SCRIPT_URL, {
               method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" }, // Evita bloqueio CORS
+              headers: { "Content-Type": "text/plain;charset=utf-8" }, 
               body: JSON.stringify({
                 base64: base64Data,
                 fileName: selectedFile.name,
@@ -188,7 +187,6 @@
 
             btn.textContent = "A Guardar na Galeria...";
             
-            // Cria o link direto usando o ID devolvido pelo Drive
             const driveThumbnailUrl = `https://drive.google.com/thumbnail?id=${result.id}&sz=w1200`;
 
             await addDoc(collection(db, "photos"), {
@@ -229,9 +227,17 @@
       const grid = document.getElementById("my-grid");
       grid.innerHTML = `<div class="gallery-loading"><div class="spinner"></div><span>Carregando...</span></div>`;
       try {
-        const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+        // Agora ordenamos as fotos direto no código (JS) para evitar que o Firebase bloqueie por falta de Índices
+        const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid));
         const snap = await getDocs(q);
-        const photos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        let photos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // Ordenando da mais nova para a mais antiga
+        photos.sort((a, b) => {
+          const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+          const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+          return timeB - timeA;
+        });
 
         if (photos.length === 0) {
           grid.innerHTML = `<div class="gallery-empty"><p>Você ainda não publicou nenhuma foto.</p></div>`;
