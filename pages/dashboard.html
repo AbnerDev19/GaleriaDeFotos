@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>OBSCURA — Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="../css/dashboard.css"/>
@@ -39,7 +38,7 @@
       <section class="dash-tab active" id="tab-upload">
         <div class="tab-header">
           <h2 class="tab-title">Nova Foto</h2>
-          <p class="tab-desc">Faça o upload da imagem diretamente do seu dispositivo.</p>
+          <p class="tab-desc">Escolha a foto. Ela irá direto para o seu Google Drive.</p>
         </div>
 
         <div class="upload-form">
@@ -50,7 +49,7 @@
 
           <div class="field">
             <label class="field-label">Pasta / Categoria</label>
-            <input type="text" id="up-category" class="field-input" placeholder="Ex: Casamentos 2024, Preto e Branco..."/>
+            <input type="text" id="up-category" class="field-input" placeholder="Ex: Casamentos 2024, Ensaios..."/>
           </div>
 
           <div class="field">
@@ -67,7 +66,7 @@
           <div class="info-msg" id="up-info"></div>
 
           <div class="up-actions">
-            <button class="btn-primary" id="btn-publish">Publicar na Galeria</button>
+            <button class="btn-primary" id="btn-publish">Fazer Upload e Publicar</button>
           </div>
         </div>
       </section>
@@ -86,8 +85,8 @@
 
   <div class="modal" id="modal-delete">
     <div class="modal-box">
-      <h3>Excluir foto?</h3>
-      <p>Esta ação não pode ser desfeita.</p>
+      <h3>Excluir foto do site?</h3>
+      <p>A foto será removida da galeria, mas continuará no seu Drive.</p>
       <div class="modal-actions">
         <button class="btn-secondary" id="modal-cancel">Cancelar</button>
         <button class="btn-danger" id="modal-confirm">Excluir</button>
@@ -99,14 +98,14 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    // IMPORT DO STORAGE ADICIONADO AQUI
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
     import { FIREBASE_CONFIG } from "../js/config.js";
+
+    // O SEU ROBÔ DO GOOGLE DRIVE ESTÁ AQUI
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPxKpCvw3g4_4JbmTJb0Ech1veHxSGFj9P2xKJxT5NGVDRjE-UV-3_xgFUjE-qWh8a/exec";
 
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     let currentUser = null;
     let deleteTarget = null;
@@ -138,7 +137,7 @@
       });
     });
 
-    // SISTEMA DE PREVIEW LOCAL (Antes de enviar)
+    // Preview Local
     document.getElementById("up-file").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -152,7 +151,7 @@
       }
     });
 
-    // UPLOAD REAL PARA O FIREBASE STORAGE
+    // UPLOAD PARA O GOOGLE DRIVE VIA APPS SCRIPT
     document.getElementById("btn-publish").addEventListener("click", async () => {
       const title = document.getElementById("up-title").value.trim();
       const category = document.getElementById("up-category").value.trim();
@@ -160,47 +159,67 @@
       const info = document.getElementById("up-info");
       err.textContent = ""; info.textContent = "";
 
-      if (!title) { err.textContent = "Insira um título."; return; }
-      if (!category) { err.textContent = "Insira uma pasta/categoria."; return; }
-      if (!selectedFile) { err.textContent = "Selecione uma imagem."; return; }
+      if (!title || !category || !selectedFile) { err.textContent = "Preencha tudo e selecione uma imagem."; return; }
 
       try {
-        document.getElementById("btn-publish").textContent = "Enviando imagem...";
-        document.getElementById("btn-publish").disabled = true;
+        const btn = document.getElementById("btn-publish");
+        btn.textContent = "A Enviar para o Drive...";
+        btn.disabled = true;
 
-        // 1. Cria um caminho único para a imagem no Storage
-        const filePath = `photos/${Date.now()}_${selectedFile.name}`;
-        const storageRef = ref(storage, filePath);
+        const reader = new FileReader();
+        reader.onload = async function() {
+          const base64Data = reader.result.split(',')[1];
+          
+          try {
+            // Envia para o Google Apps Script
+            const response = await fetch(APPS_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" }, // Evita bloqueio CORS
+              body: JSON.stringify({
+                base64: base64Data,
+                fileName: selectedFile.name,
+                mimeType: selectedFile.type
+              })
+            });
 
-        // 2. Faz o upload do ficheiro
-        await uploadBytes(storageRef, selectedFile);
+            const result = await response.json();
 
-        // 3. Pega o Link público da imagem que acabou de subir
-        const downloadUrl = await getDownloadURL(storageRef);
+            if (!result.success) throw new Error(result.error);
 
-        // 4. Salva tudo na base de dados
-        document.getElementById("btn-publish").textContent = "Salvando dados...";
-        await addDoc(collection(db, "photos"), {
-          title,
-          category,
-          imageUrl: downloadUrl, // Usamos o link direto gerado pelo Firebase
-          authorName: currentUser.displayName || currentUser.email,
-          authorId: currentUser.uid,
-          createdAt: serverTimestamp(),
-          isVisible: true
-        });
+            btn.textContent = "A Guardar na Galeria...";
+            
+            // Cria o link direto usando o ID devolvido pelo Drive
+            const driveThumbnailUrl = `https://drive.google.com/thumbnail?id=${result.id}&sz=w1200`;
 
-        info.textContent = "✓ Foto publicada com sucesso!";
-        document.getElementById("up-title").value = "";
-        document.getElementById("up-category").value = "";
-        document.getElementById("up-file").value = "";
-        selectedFile = null;
-        document.getElementById("preview-area").style.display = "none";
-        document.getElementById("btn-publish").textContent = "Publicar na Galeria";
-        document.getElementById("btn-publish").disabled = false;
+            await addDoc(collection(db, "photos"), {
+              title,
+              category,
+              driveUrl: driveThumbnailUrl,
+              driveId: result.id,
+              authorName: currentUser.displayName || currentUser.email,
+              authorId: currentUser.uid,
+              createdAt: serverTimestamp(),
+              isVisible: true
+            });
+
+            info.textContent = "✓ Foto enviada e publicada!";
+            document.getElementById("up-title").value = "";
+            document.getElementById("up-category").value = "";
+            document.getElementById("up-file").value = "";
+            selectedFile = null;
+            document.getElementById("preview-area").style.display = "none";
+          } catch(apiError) {
+            err.textContent = "Erro na ligação ao Drive. Tente novamente.";
+            console.error(apiError);
+          } finally {
+            btn.textContent = "Fazer Upload e Publicar";
+            btn.disabled = false;
+          }
+        };
+        reader.readAsDataURL(selectedFile);
+
       } catch(e) {
-        err.textContent = "Erro ao publicar. Tente novamente.";
-        document.getElementById("btn-publish").textContent = "Publicar na Galeria";
+        err.textContent = "Erro ao ler ficheiro.";
         document.getElementById("btn-publish").disabled = false;
         console.error(e);
       }
@@ -226,7 +245,7 @@
           const isHidden = photo.isVisible === false;
           
           card.innerHTML = `
-            <img src="${photo.imageUrl}" alt="${photo.title}" loading="lazy" style="${isHidden ? 'filter: grayscale(1) brightness(0.4);' : ''}"/>
+            <img src="${photo.driveUrl}" alt="${photo.title}" loading="lazy" style="${isHidden ? 'filter: grayscale(1) brightness(0.4);' : ''}"/>
             <div class="my-card-info">
               <strong>${photo.title} ${isHidden ? '(Oculta)' : ''}</strong>
               <span class="category-tag">${photo.category}</span>
