@@ -328,3 +328,15 @@
   .dash-sidebar { display: none; }
   .dash-main { padding: 24px 20px; }
 }
+@media (max-width: 768px) {
+  .dash-sidebar { display: none; }
+  .dash-main { padding: 24px 16px; }
+  .tab-title { font-size: 32px; }
+  .upload-form { gap: 24px; }
+  
+  .my-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .my-card-info { padding: 16px; }
+  .my-card-info strong { font-size: 15px; }
+  .btn-delete { width: 36px; height: 36px; font-size: 14px; }
+  .btn-toggle-vis { font-size: 11px; padding: 8px 12px; }
+}
