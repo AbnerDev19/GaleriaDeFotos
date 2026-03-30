@@ -28,17 +28,8 @@
     <div class="hero-lines"></div>
   </header>
 
-  <section class="filters-bar">
-    <button class="filter-btn active" data-filter="all">Todos</button>
-    <button class="filter-btn" data-filter="retrato">Retrato</button>
-    <button class="filter-btn" data-filter="urbano">Urbano</button>
-    <button class="filter-btn" data-filter="natureza">Natureza</button>
-    <button class="filter-btn" data-filter="evento">Evento</button>
-    
-    <select id="filter-author" class="field-input field-select" style="width: auto; margin-left: auto; padding: 6px 36px 6px 14px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">
-      <option value="all">Todos os Fotógrafos</option>
-    </select>
-  </section>
+  <section class="filters-bar" id="dynamic-filters">
+    </section>
 
   <main class="gallery" id="gallery">
     <div class="gallery-loading" id="gallery-loading">
@@ -74,7 +65,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { FIREBASE_CONFIG } from "../js/config.js";
+    import { FIREBASE_CONFIG } from "./js/config.js";
 
     const app = initializeApp(FIREBASE_CONFIG);
     const db = getFirestore(app);
@@ -93,7 +84,9 @@
       try {
         const q = query(collection(db, "photos"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        allPhotos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        // Remove as fotos ocultas
+        allPhotos = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.isVisible !== false);
 
         loading.style.display = "none";
 
@@ -102,7 +95,7 @@
           return;
         }
 
-        populateAuthors();
+        generateFilters();
         renderGrid(allPhotos);
       } catch (e) {
         loading.innerHTML = `<span style="color:var(--red)">Erro ao carregar. Verifique a configuração do Firebase.</span>`;
@@ -110,18 +103,46 @@
       }
     }
 
-    function populateAuthors() {
-      const select = document.getElementById("filter-author");
-      const authors = [...new Set(allPhotos.map(p => p.authorName))].filter(Boolean);
+    function generateFilters() {
+      const filterBar = document.getElementById("dynamic-filters");
+      filterBar.innerHTML = `<button class="filter-btn active" data-filter="all">Todas as Pastas</button>`;
+      
+      const categories = [...new Set(allPhotos.map(p => p.category))].filter(Boolean);
+      
+      categories.forEach(cat => {
+        const btn = document.createElement("button");
+        btn.className = "filter-btn";
+        btn.dataset.filter = cat;
+        btn.textContent = cat;
+        filterBar.appendChild(btn);
+      });
 
+      const authorSelect = document.createElement("select");
+      authorSelect.id = "filter-author";
+      authorSelect.className = "field-input field-select";
+      authorSelect.style.cssText = "width: auto; margin-left: auto; padding: 6px 36px 6px 14px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;";
+      authorSelect.innerHTML = `<option value="all">Todos os Fotógrafos</option>`;
+      
+      const authors = [...new Set(allPhotos.map(p => p.authorName))].filter(Boolean);
       authors.forEach(author => {
         const option = document.createElement("option");
         option.value = author;
         option.textContent = author;
-        select.appendChild(option);
+        authorSelect.appendChild(option);
+      });
+      
+      filterBar.appendChild(authorSelect);
+
+      document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          activeFilter = btn.dataset.filter;
+          renderGrid(allPhotos);
+        });
       });
 
-      select.addEventListener("change", (e) => {
+      authorSelect.addEventListener("change", (e) => {
         activeAuthor = e.target.value;
         renderGrid(allPhotos);
       });
@@ -173,9 +194,7 @@
       document.getElementById("lb-img").src = p.driveUrl;
       document.getElementById("lb-title").textContent = p.title;
       document.getElementById("lb-author").textContent = "por " + p.authorName;
-      document.getElementById("lb-date").textContent = p.createdAt?.toDate
-        ? p.createdAt.toDate().toLocaleDateString("pt-BR")
-        : "";
+      document.getElementById("lb-date").textContent = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleDateString("pt-BR") : "";
     }
 
     document.getElementById("lb-close").addEventListener("click", () => {
@@ -192,15 +211,6 @@
       if(currentFilteredPhotos.length === 0) return;
       currentIndex = (currentIndex + 1) % currentFilteredPhotos.length;
       updateLightbox(currentFilteredPhotos, currentIndex);
-    });
-
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        activeFilter = btn.dataset.filter;
-        renderGrid(allPhotos);
-      });
     });
 
     document.getElementById("lightbox").addEventListener("click", (e) => {
