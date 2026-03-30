@@ -21,8 +21,6 @@
   </nav>
 
   <div class="dash-layout">
-
-    <!-- SIDEBAR -->
     <aside class="dash-sidebar">
       <div class="sidebar-profile">
         <div class="sidebar-avatar" id="sidebar-avatar">F</div>
@@ -41,10 +39,7 @@
       </nav>
     </aside>
 
-    <!-- MAIN -->
     <main class="dash-main">
-
-      <!-- ABA UPLOAD -->
       <section class="dash-tab active" id="tab-upload">
         <div class="tab-header">
           <h2 class="tab-title">Nova Foto</h2>
@@ -58,14 +53,8 @@
           </div>
 
           <div class="field">
-            <label class="field-label">Categoria</label>
-            <select id="up-category" class="field-input field-select">
-              <option value="">Selecione...</option>
-              <option value="retrato">Retrato</option>
-              <option value="urbano">Urbano</option>
-              <option value="natureza">Natureza</option>
-              <option value="evento">Evento</option>
-            </select>
+            <label class="field-label">Pasta / Categoria</label>
+            <input type="text" id="up-category" class="field-input" placeholder="Ex: Casamentos 2024, Preto e Branco..."/>
           </div>
 
           <div class="field">
@@ -86,7 +75,6 @@
             </ol>
           </div>
 
-          <!-- PREVIEW -->
           <div class="preview-area" id="preview-area" style="display:none">
             <span class="preview-label">Pré-visualização</span>
             <img id="preview-img" src="" alt="preview"/>
@@ -102,7 +90,6 @@
         </div>
       </section>
 
-      <!-- ABA MINHAS FOTOS -->
       <section class="dash-tab" id="tab-minhas">
         <div class="tab-header">
           <h2 class="tab-title">Minhas Fotos</h2>
@@ -112,11 +99,9 @@
           <div class="gallery-loading"><div class="spinner"></div><span>Carregando...</span></div>
         </div>
       </section>
-
     </main>
   </div>
 
-  <!-- MODAL DELETE -->
   <div class="modal" id="modal-delete">
     <div class="modal-box">
       <h3>Excluir foto?</h3>
@@ -130,13 +115,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, deleteDoc,
-      doc, query, where, orderBy, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { FIREBASE_CONFIG } from "../js/config.js";
 
     const app = initializeApp(FIREBASE_CONFIG);
@@ -146,7 +126,6 @@
     let currentUser = null;
     let deleteTarget = null;
 
-    // Auth guard
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "login.html";
@@ -156,17 +135,14 @@
       document.getElementById("nav-user").textContent = user.displayName || user.email;
       document.getElementById("sidebar-name").textContent = user.displayName || "Fotógrafo";
       document.getElementById("sidebar-email").textContent = user.email;
-      document.getElementById("sidebar-avatar").textContent =
-        (user.displayName || user.email)[0].toUpperCase();
+      document.getElementById("sidebar-avatar").textContent = (user.displayName || user.email)[0].toUpperCase();
     });
 
-    // Logout
     document.getElementById("btn-logout").addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "login.html";
     });
 
-    // Tabs
     document.querySelectorAll(".s-link").forEach(link => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
@@ -179,14 +155,12 @@
       });
     });
 
-    // Converter link Drive para URL de imagem direta
     function driveUrlToImg(url) {
       const match = url.match(/\/d\/([\w-]+)/);
       if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
       return url;
     }
 
-    // Preview
     document.getElementById("btn-preview").addEventListener("click", () => {
       const url = document.getElementById("up-drive").value.trim();
       if (!url) return;
@@ -196,17 +170,16 @@
       prev.style.display = "block";
     });
 
-    // Publicar
     document.getElementById("btn-publish").addEventListener("click", async () => {
       const title = document.getElementById("up-title").value.trim();
-      const category = document.getElementById("up-category").value;
+      const category = document.getElementById("up-category").value.trim();
       const driveLink = document.getElementById("up-drive").value.trim();
       const err = document.getElementById("up-error");
       const info = document.getElementById("up-info");
       err.textContent = ""; info.textContent = "";
 
       if (!title) { err.textContent = "Insira um título."; return; }
-      if (!category) { err.textContent = "Selecione uma categoria."; return; }
+      if (!category) { err.textContent = "Insira uma pasta/categoria."; return; }
       if (!driveLink) { err.textContent = "Cole o link do Google Drive."; return; }
       if (!driveLink.includes("drive.google.com")) {
         err.textContent = "Link inválido. Use um link do Google Drive.";
@@ -222,7 +195,8 @@
           driveOriginal: driveLink,
           authorName: currentUser.displayName || currentUser.email,
           authorId: currentUser.uid,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          isVisible: true
         });
 
         info.textContent = "✓ Foto publicada com sucesso!";
@@ -238,16 +212,11 @@
       }
     });
 
-    // Minhas fotos
     async function loadMyPhotos() {
       const grid = document.getElementById("my-grid");
       grid.innerHTML = `<div class="gallery-loading"><div class="spinner"></div><span>Carregando...</span></div>`;
       try {
-        const q = query(
-          collection(db, "photos"),
-          where("authorId", "==", currentUser.uid),
-          orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
         const photos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -260,13 +229,18 @@
         photos.forEach(photo => {
           const card = document.createElement("div");
           card.className = "my-card";
+          const isHidden = photo.isVisible === false;
+          
           card.innerHTML = `
-            <img src="${photo.driveUrl}" alt="${photo.title}" loading="lazy"/>
+            <img src="${photo.driveUrl}" alt="${photo.title}" loading="lazy" style="${isHidden ? 'filter: grayscale(1) brightness(0.4);' : ''}"/>
             <div class="my-card-info">
-              <strong>${photo.title}</strong>
+              <strong>${photo.title} ${isHidden ? '(Oculta)' : ''}</strong>
               <span class="category-tag">${photo.category}</span>
             </div>
             <button class="btn-delete" data-id="${photo.id}" title="Excluir">✕</button>
+            <button class="btn-toggle-vis btn-secondary" data-id="${photo.id}" data-visible="${!isHidden}" style="position:absolute; top:8px; left:8px; padding: 4px 8px; font-size: 9px; background: rgba(14,14,14,0.8); border-color: var(--black-5);">
+              ${isHidden ? 'Mostrar' : 'Ocultar'}
+            </button>
           `;
           grid.appendChild(card);
         });
@@ -277,13 +251,24 @@
             document.getElementById("modal-delete").classList.add("active");
           });
         });
+
+        document.querySelectorAll(".btn-toggle-vis").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const photoId = btn.dataset.id;
+            const currentVis = btn.dataset.visible === "true";
+            try {
+              btn.textContent = "...";
+              await updateDoc(doc(db, "photos", photoId), { isVisible: !currentVis });
+              loadMyPhotos();
+            } catch(e) { console.error("Erro ao atualizar visibilidade", e); }
+          });
+        });
       } catch(e) {
         grid.innerHTML = `<span style="color:var(--red)">Erro ao carregar fotos.</span>`;
         console.error(e);
       }
     }
 
-    // Modal delete
     document.getElementById("modal-cancel").addEventListener("click", () => {
       document.getElementById("modal-delete").classList.remove("active");
       deleteTarget = null;
@@ -296,9 +281,7 @@
         document.getElementById("modal-delete").classList.remove("active");
         deleteTarget = null;
         loadMyPhotos();
-      } catch(e) {
-        console.error(e);
-      }
+      } catch(e) { console.error(e); }
     });
   </script>
 </body>
