@@ -529,3 +529,22 @@ a { color: inherit; text-decoration: none; }
   .lightbox-prev { left: 8px; }
   .lightbox-next { right: 8px; }
 }
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+  .nav { padding: 0 20px; }
+  .filters-bar { padding: 20px; }
+  .gallery { padding: 24px 20px 60px; }
+  
+  /* Reduz para 2 colunas em tablets/celulares deitados */
+  .gallery-grid { column-count: 2; column-gap: 6px; } 
+  .photo-card { margin-bottom: 6px; }
+  
+  .footer { flex-direction: column; gap: 8px; text-align: center; }
+  .lightbox-prev { left: 8px; }
+  .lightbox-next { right: 8px; }
+}
+
+@media (max-width: 480px) {
+  /* Reduz para 1 coluna em celulares muito pequenos (opcional, se preferir fotos grandes) */
+  .gallery-grid { column-count: 1; }
+}
