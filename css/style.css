@@ -510,41 +510,37 @@ a { color: inherit; text-decoration: none; }
 .btn-danger:hover { background: #c03030; }
 
 /* ---- RESPONSIVE ---- */
+/* ---- RESPONSIVE (CORRIGIDO PARA NÃO PARECER DISTANTE) ---- */
 @media (max-width: 768px) {
-  .nav { padding: 0 20px; }
-  .filters-bar { padding: 20px; }
-  .gallery { padding: 24px 20px 60px; }
-  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-  .footer { flex-direction: column; gap: 8px; text-align: center; }
-  .lightbox-prev { left: 8px; }
-  .lightbox-next { right: 8px; }
-}
-/* ---- RESPONSIVE ---- */
-@media (max-width: 768px) {
-  .nav { padding: 0 20px; }
-  .filters-bar { padding: 20px; }
-  .gallery { padding: 24px 20px 60px; }
-  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-  .footer { flex-direction: column; gap: 8px; text-align: center; }
-  .lightbox-prev { left: 8px; }
-  .lightbox-next { right: 8px; }
-}
-/* ---- RESPONSIVE ---- */
-@media (max-width: 768px) {
-  .nav { padding: 0 20px; }
-  .filters-bar { padding: 20px; }
-  .gallery { padding: 24px 20px 60px; }
+  body { font-size: 16px; }
+  .nav { padding: 0 20px; height: 70px; }
+  .logo { font-size: 26px; }
+  .nav-link { font-size: 14px; }
   
-  /* Reduz para 2 colunas em tablets/celulares deitados */
-  .gallery-grid { column-count: 2; column-gap: 6px; } 
-  .photo-card { margin-bottom: 6px; }
+  .hero-title { font-size: 14vw; }
+  .filters-bar { padding: 20px; gap: 12px; }
+  .filter-btn { font-size: 13px; padding: 10px 20px; }
+  .field-select { font-size: 13px; padding: 10px 36px 10px 14px; }
   
-  .footer { flex-direction: column; gap: 8px; text-align: center; }
-  .lightbox-prev { left: 8px; }
-  .lightbox-next { right: 8px; }
+  .gallery { padding: 20px 16px 60px; }
+  .gallery-grid { column-count: 2; column-gap: 12px; } 
+  .photo-card { margin-bottom: 12px; }
+  .card-title { font-size: 20px; }
+  .card-category { font-size: 11px; }
+
+  .footer { flex-direction: column; gap: 12px; text-align: center; font-size: 13px; }
+  .lightbox-prev, .lightbox-next { font-size: 24px; padding: 16px 20px; }
+  .lightbox-prev { left: 5px; }
+  .lightbox-next { right: 5px; }
+
+  /* Aumentar formulários */
+  .field-label { font-size: 13px; }
+  .field-input { font-size: 16px; padding: 14px 16px; }
+  .btn-primary, .btn-secondary { font-size: 14px; padding: 14px 24px; }
 }
 
 @media (max-width: 480px) {
-  /* Reduz para 1 coluna em celulares muito pequenos (opcional, se preferir fotos grandes) */
+  /* Em ecrãs muito pequenos, as fotos ficam gigantes (1 por linha) */
   .gallery-grid { column-count: 1; }
+  .hero-title { font-size: 18vw; }
 }
