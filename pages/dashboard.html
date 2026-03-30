@@ -30,12 +30,8 @@
         </div>
       </div>
       <nav class="sidebar-nav">
-        <a href="#upload" class="s-link active" data-tab="upload">
-          <span class="s-icon">⬆</span> Upload
-        </a>
-        <a href="#minhas" class="s-link" data-tab="minhas">
-          <span class="s-icon">◫</span> Minhas Fotos
-        </a>
+        <a href="#upload" class="s-link active" data-tab="upload"><span class="s-icon">⬆</span> Upload</a>
+        <a href="#minhas" class="s-link" data-tab="minhas"><span class="s-icon">◫</span> Minhas Fotos</a>
       </nav>
     </aside>
 
@@ -43,7 +39,7 @@
       <section class="dash-tab active" id="tab-upload">
         <div class="tab-header">
           <h2 class="tab-title">Nova Foto</h2>
-          <p class="tab-desc">Cole o link do Google Drive para publicar na galeria.</p>
+          <p class="tab-desc">Faça o upload da imagem diretamente do seu dispositivo.</p>
         </div>
 
         <div class="upload-form">
@@ -58,21 +54,8 @@
           </div>
 
           <div class="field">
-            <label class="field-label">Link do Google Drive</label>
-            <input type="text" id="up-drive" class="field-input" placeholder="https://drive.google.com/file/d/..."/>
-            <span class="field-hint">
-              Compartilhe a imagem no Drive com "Qualquer pessoa com o link" e cole o link aqui.
-            </span>
-          </div>
-
-          <div class="drive-instructions">
-            <div class="inst-title">Como compartilhar no Google Drive:</div>
-            <ol class="inst-list">
-              <li>Faça upload da foto no Google Drive</li>
-              <li>Clique com botão direito → "Compartilhar"</li>
-              <li>Altere para <strong>"Qualquer pessoa com o link"</strong></li>
-              <li>Copie o link e cole acima</li>
-            </ol>
+            <label class="field-label">Selecione a Imagem</label>
+            <input type="file" id="up-file" class="field-input" accept="image/*" style="padding: 7px 10px; cursor: pointer;"/>
           </div>
 
           <div class="preview-area" id="preview-area" style="display:none">
@@ -84,7 +67,6 @@
           <div class="info-msg" id="up-info"></div>
 
           <div class="up-actions">
-            <button class="btn-secondary" id="btn-preview">Pré-visualizar</button>
             <button class="btn-primary" id="btn-publish">Publicar na Galeria</button>
           </div>
         </div>
@@ -117,20 +99,21 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    // IMPORT DO STORAGE ADICIONADO AQUI
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
     import { FIREBASE_CONFIG } from "../js/config.js";
 
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
     let currentUser = null;
     let deleteTarget = null;
+    let selectedFile = null;
 
     onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
+      if (!user) { window.location.href = "login.html"; return; }
       currentUser = user;
       document.getElementById("nav-user").textContent = user.displayName || user.email;
       document.getElementById("sidebar-name").textContent = user.displayName || "Fotógrafo";
@@ -155,44 +138,52 @@
       });
     });
 
-    function driveUrlToImg(url) {
-      const match = url.match(/\/d\/([\w-]+)/);
-      if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1200`;
-      return url;
-    }
-
-    document.getElementById("btn-preview").addEventListener("click", () => {
-      const url = document.getElementById("up-drive").value.trim();
-      if (!url) return;
-      const imgUrl = driveUrlToImg(url);
-      const prev = document.getElementById("preview-area");
-      document.getElementById("preview-img").src = imgUrl;
-      prev.style.display = "block";
+    // SISTEMA DE PREVIEW LOCAL (Antes de enviar)
+    document.getElementById("up-file").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          document.getElementById("preview-img").src = evt.target.result;
+          document.getElementById("preview-area").style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
     });
 
+    // UPLOAD REAL PARA O FIREBASE STORAGE
     document.getElementById("btn-publish").addEventListener("click", async () => {
       const title = document.getElementById("up-title").value.trim();
       const category = document.getElementById("up-category").value.trim();
-      const driveLink = document.getElementById("up-drive").value.trim();
       const err = document.getElementById("up-error");
       const info = document.getElementById("up-info");
       err.textContent = ""; info.textContent = "";
 
       if (!title) { err.textContent = "Insira um título."; return; }
       if (!category) { err.textContent = "Insira uma pasta/categoria."; return; }
-      if (!driveLink) { err.textContent = "Cole o link do Google Drive."; return; }
-      if (!driveLink.includes("drive.google.com")) {
-        err.textContent = "Link inválido. Use um link do Google Drive.";
-        return;
-      }
+      if (!selectedFile) { err.textContent = "Selecione uma imagem."; return; }
 
       try {
-        document.getElementById("btn-publish").textContent = "Publicando...";
+        document.getElementById("btn-publish").textContent = "Enviando imagem...";
+        document.getElementById("btn-publish").disabled = true;
+
+        // 1. Cria um caminho único para a imagem no Storage
+        const filePath = `photos/${Date.now()}_${selectedFile.name}`;
+        const storageRef = ref(storage, filePath);
+
+        // 2. Faz o upload do ficheiro
+        await uploadBytes(storageRef, selectedFile);
+
+        // 3. Pega o Link público da imagem que acabou de subir
+        const downloadUrl = await getDownloadURL(storageRef);
+
+        // 4. Salva tudo na base de dados
+        document.getElementById("btn-publish").textContent = "Salvando dados...";
         await addDoc(collection(db, "photos"), {
           title,
           category,
-          driveUrl: driveUrlToImg(driveLink),
-          driveOriginal: driveLink,
+          imageUrl: downloadUrl, // Usamos o link direto gerado pelo Firebase
           authorName: currentUser.displayName || currentUser.email,
           authorId: currentUser.uid,
           createdAt: serverTimestamp(),
@@ -202,12 +193,15 @@
         info.textContent = "✓ Foto publicada com sucesso!";
         document.getElementById("up-title").value = "";
         document.getElementById("up-category").value = "";
-        document.getElementById("up-drive").value = "";
+        document.getElementById("up-file").value = "";
+        selectedFile = null;
         document.getElementById("preview-area").style.display = "none";
         document.getElementById("btn-publish").textContent = "Publicar na Galeria";
+        document.getElementById("btn-publish").disabled = false;
       } catch(e) {
         err.textContent = "Erro ao publicar. Tente novamente.";
         document.getElementById("btn-publish").textContent = "Publicar na Galeria";
+        document.getElementById("btn-publish").disabled = false;
         console.error(e);
       }
     });
@@ -232,7 +226,7 @@
           const isHidden = photo.isVisible === false;
           
           card.innerHTML = `
-            <img src="${photo.driveUrl}" alt="${photo.title}" loading="lazy" style="${isHidden ? 'filter: grayscale(1) brightness(0.4);' : ''}"/>
+            <img src="${photo.imageUrl}" alt="${photo.title}" loading="lazy" style="${isHidden ? 'filter: grayscale(1) brightness(0.4);' : ''}"/>
             <div class="my-card-info">
               <strong>${photo.title} ${isHidden ? '(Oculta)' : ''}</strong>
               <span class="category-tag">${photo.category}</span>
