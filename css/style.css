@@ -514,3 +514,13 @@ a { color: inherit; text-decoration: none; }
   .lightbox-prev { left: 8px; }
   .lightbox-next { right: 8px; }
 }
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+  .nav { padding: 0 20px; }
+  .filters-bar { padding: 20px; }
+  .gallery { padding: 24px 20px 60px; }
+  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .footer { flex-direction: column; gap: 8px; text-align: center; }
+  .lightbox-prev { left: 8px; }
+  .lightbox-next { right: 8px; }
+}
