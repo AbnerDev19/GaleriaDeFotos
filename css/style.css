@@ -191,6 +191,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ---- GALLERY ---- */
+/* ---- GALLERY ---- */
 .gallery {
   padding: 40px 48px 80px;
   min-height: 400px;
@@ -218,10 +219,10 @@ a { color: inherit; text-decoration: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* AQUI MUDA A GRELHA PARA ESTILO PINTEREST (MASONRY) */
 .gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 3px;
+  column-count: 3;
+  column-gap: 8px;
 }
 
 .gallery-empty {
@@ -233,7 +234,6 @@ a { color: inherit; text-decoration: none; }
 .gallery-empty a { color: var(--red-light); }
 
 .no-result {
-  grid-column: 1/-1;
   text-align: center;
   padding: 60px;
   color: var(--white-faint);
@@ -244,19 +244,25 @@ a { color: inherit; text-decoration: none; }
 /* ---- PHOTO CARD ---- */
 .photo-card {
   position: relative;
-  aspect-ratio: 4/3;
+  /* aspect-ratio removido para respeitar o tamanho real da foto */
+  margin-bottom: 8px; 
+  break-inside: avoid; /* Impede que a foto seja cortada ao meio na coluna */
   overflow: hidden;
   cursor: pointer;
   background: var(--black-3);
+  border-radius: var(--radius); /* Opcional: cantos levemente arredondados */
 }
 
 .card-img-wrap {
   position: relative;
-  width: 100%; height: 100%;
+  width: 100%; 
+  height: auto; /* Permite que a altura seja fluida */
+  display: block;
 }
 
 .card-img-wrap img {
-  width: 100%; height: 100%;
+  width: 100%; 
+  height: auto; /* A imagem dita a própria altura */
   object-fit: cover;
   display: block;
   transition: transform 0.5s ease, filter 0.3s ease;
@@ -303,7 +309,6 @@ a { color: inherit; text-decoration: none; }
   color: var(--white-dim);
   margin-top: 3px;
 }
-
 /* ---- LIGHTBOX ---- */
 .lightbox {
   position: fixed;
