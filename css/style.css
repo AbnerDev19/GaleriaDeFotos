@@ -92,7 +92,7 @@ a { color: inherit; text-decoration: none; }
 /* ---- HERO ---- */
 .hero {
   padding-top: 60px;
-  min-height: 420px;
+  min-height: 380px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,7 +120,7 @@ a { color: inherit; text-decoration: none; }
 
 .hero-title {
   font-family: var(--font-display);
-  font-size: clamp(80px, 14vw, 180px);
+  font-size: clamp(60px, 12vw, 150px);
   line-height: 0.9;
   letter-spacing: 6px;
   color: var(--white);
@@ -158,14 +158,19 @@ a { color: inherit; text-decoration: none; }
   pointer-events: none;
 }
 
-/* ---- FILTROS ---- */
+/* ---- FILTROS (Com Scroll Horizontal Fluido) ---- */
 .filters-bar {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding: 28px 48px 20px;
+  gap: 10px;
+  padding: 20px 48px;
   border-bottom: 1px solid var(--black-4);
+  overflow-x: auto;
+  white-space: nowrap;
+  align-items: center;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
 }
+.filters-bar::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
 
 .filter-btn {
   font-family: var(--font-mono);
@@ -179,6 +184,7 @@ a { color: inherit; text-decoration: none; }
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
+  flex-shrink: 0;
 }
 .filter-btn:hover {
   border-color: var(--red-dim);
@@ -190,7 +196,11 @@ a { color: inherit; text-decoration: none; }
   color: var(--white);
 }
 
-/* ---- GALLERY ---- */
+#filter-author {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 /* ---- GALLERY ---- */
 .gallery {
   padding: 40px 48px 80px;
@@ -219,7 +229,7 @@ a { color: inherit; text-decoration: none; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* AQUI MUDA A GRELHA PARA ESTILO PINTEREST (MASONRY) */
+/* GRELHA MASONRY DESKTOP (3 Colunas) */
 .gallery-grid {
   column-count: 3;
   column-gap: 8px;
@@ -244,25 +254,24 @@ a { color: inherit; text-decoration: none; }
 /* ---- PHOTO CARD ---- */
 .photo-card {
   position: relative;
-  /* aspect-ratio removido para respeitar o tamanho real da foto */
   margin-bottom: 8px; 
-  break-inside: avoid; /* Impede que a foto seja cortada ao meio na coluna */
+  break-inside: avoid; 
   overflow: hidden;
   cursor: pointer;
   background: var(--black-3);
-  border-radius: var(--radius); /* Opcional: cantos levemente arredondados */
+  border-radius: var(--radius); 
 }
 
 .card-img-wrap {
   position: relative;
   width: 100%; 
-  height: auto; /* Permite que a altura seja fluida */
+  height: auto; 
   display: block;
 }
 
 .card-img-wrap img {
   width: 100%; 
-  height: auto; /* A imagem dita a própria altura */
+  height: auto; 
   object-fit: cover;
   display: block;
   transition: transform 0.5s ease, filter 0.3s ease;
@@ -309,6 +318,7 @@ a { color: inherit; text-decoration: none; }
   color: var(--white-dim);
   margin-top: 3px;
 }
+
 /* ---- LIGHTBOX ---- */
 .lightbox {
   position: fixed;
@@ -509,38 +519,54 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-danger:hover { background: #c03030; }
 
-/* ---- RESPONSIVE ---- */
-/* ---- RESPONSIVE (CORRIGIDO PARA NÃO PARECER DISTANTE) ---- */
+/* ============================================
+   RESPONSIVO EXTREMO (A Mágica do Telemóvel)
+   ============================================ */
 @media (max-width: 768px) {
-  body { font-size: 16px; }
-  .nav { padding: 0 20px; height: 70px; }
-  .logo { font-size: 26px; }
-  .nav-link { font-size: 14px; }
+  body { font-size: 14px; }
   
-  .hero-title { font-size: 14vw; }
-  .filters-bar { padding: 20px; gap: 12px; }
-  .filter-btn { font-size: 13px; padding: 10px 20px; }
-  .field-select { font-size: 13px; padding: 10px 36px 10px 14px; }
+  /* NAV COMPACTA E LIMPA */
+  .nav { padding: 0 16px; height: 60px; }
+  .logo { font-size: 18px; letter-spacing: 2px; }
+  .nav-links { gap: 14px; }
+  .nav-link { font-size: 10px; letter-spacing: 1px; }
+
+  /* HERO ELEGANTE */
+  .hero { min-height: 280px; padding-top: 60px; }
+  .hero-eyebrow { font-size: 9px; margin-bottom: 12px; }
+  .hero-title { font-size: clamp(48px, 16vw, 90px); letter-spacing: 3px; }
+  .hero-sub { font-size: 12px; margin-top: 12px; }
+
+  /* FILTROS SCROLLÁVEIS (Estilo Youtube/Insta) */
+  .filters-bar { 
+    padding: 16px; 
+    gap: 8px;
+  }
+  #filter-author {
+    margin-left: 0; 
+  }
+  .filter-btn { font-size: 10px; padding: 8px 16px; }
+  .field-select { font-size: 10px; padding: 8px 30px 8px 12px; }
+
+  /* GRELHA 3 COLUNAS FIXA (Como no Git / Foto 1) */
+  .gallery { padding: 12px 8px 60px; }
+  .gallery-grid { column-count: 3; column-gap: 6px; } 
+  .photo-card { margin-bottom: 6px; border-radius: 2px; }
   
-  .gallery { padding: 20px 16px 60px; }
-  .gallery-grid { column-count: 2; column-gap: 12px; } 
-  .photo-card { margin-bottom: 12px; }
-  .card-title { font-size: 20px; }
-  .card-category { font-size: 11px; }
+  /* Ajusta o texto da foto para não sobrepor tudo na coluna pequena */
+  .card-overlay { padding: 8px; }
+  .card-title { font-size: 12px; line-height: 1.1; margin-bottom: 2px; }
+  .card-category { font-size: 8px; margin-bottom: 2px; }
+  .card-author { font-size: 8px; margin-top: 0; }
 
-  .footer { flex-direction: column; gap: 12px; text-align: center; font-size: 13px; }
-  .lightbox-prev, .lightbox-next { font-size: 24px; padding: 16px 20px; }
-  .lightbox-prev { left: 5px; }
-  .lightbox-next { right: 5px; }
-
-  /* Aumentar formulários */
-  .field-label { font-size: 13px; }
-  .field-input { font-size: 16px; padding: 14px 16px; }
-  .btn-primary, .btn-secondary { font-size: 14px; padding: 14px 24px; }
-}
-
-@media (max-width: 480px) {
-  /* Em ecrãs muito pequenos, as fotos ficam gigantes (1 por linha) */
-  .gallery-grid { column-count: 1; }
-  .hero-title { font-size: 18vw; }
+  /* FOOTER */
+  .footer { flex-direction: column; gap: 12px; text-align: center; padding: 24px 16px; }
+  
+  /* LIGHTBOX */
+  .lightbox-prev, .lightbox-next { font-size: 20px; padding: 10px 14px; }
+  .lightbox-prev { left: 4px; }
+  .lightbox-next { right: 4px; }
+  .lightbox-inner img { max-width: 95vw; }
+  .lb-title { font-size: 16px; }
+  .lb-author, .lb-date { font-size: 10px; }
 }
