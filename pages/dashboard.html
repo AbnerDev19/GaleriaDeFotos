@@ -54,12 +54,16 @@
                 <option value="">Carregando pastas...</option>
               </select>
               <button type="button" id="btn-new-folder" class="btn-secondary" style="padding: 0 16px; white-space: nowrap;">+ Nova</button>
+              <button type="button" id="btn-manage-folders" class="btn-secondary" style="padding: 0 16px; white-space: nowrap;">Gerir</button>
             </div>
           </div>
 
           <div class="field">
             <label class="field-label">Selecione as Imagens</label>
-            <input type="file" id="up-file" class="field-input" accept="image/*" multiple style="padding: 7px 10px; cursor: pointer;"/>
+            <input type="file" id="up-file" accept="image/*" multiple style="display: none;"/>
+            <label for="up-file" id="file-label" style="display: flex; justify-content: center; background: var(--black-3); border: 1px dashed var(--black-5); color: var(--white-dim); padding: 24px; border-radius: 3px; cursor: pointer; font-family: var(--font-mono); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; text-align: center;">
+              📁 Clique aqui para escolher os arquivos...
+            </label>
           </div>
 
           <div class="preview-area" id="preview-area" style="display:none">
@@ -99,13 +103,27 @@
     </div>
   </div>
 
+  <div class="modal" id="modal-folders">
+    <div class="modal-box" style="max-width: 450px;">
+      <h3>Gerir Pastas</h3>
+      <p style="margin-bottom: 16px;">Renomeie ou exclua as suas categorias.</p>
+      
+      <div id="folders-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; text-align: left;">
+        </div>
+
+      <div class="modal-actions" style="margin-top: 24px;">
+        <button class="btn-secondary" id="modal-folders-close">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { FIREBASE_CONFIG } from "../js/config.js";
 
-    // ⚠️ ATENÇÃO: COLOQUE AQUI O NOVO LINK QUE GEROU NO PASSO 1
+    // O SEU LINK DO APPS SCRIPT
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby74kg0nQxz4t_HonEwfGqDAyAPoMjAhl4Tou7_iuqs6bB5f6IURrdn8H1v4DEGkAwk/exec";
 
     const app = initializeApp(FIREBASE_CONFIG);
@@ -115,6 +133,7 @@
     let currentUser = null;
     let deleteTarget = null;
     let selectedFiles = [];
+    let userFolders = new Set(); // Guarda as pastas do utilizador
 
     onAuthStateChanged(auth, user => {
       if (!user) { window.location.href = "login.html"; return; }
@@ -127,29 +146,131 @@
       loadFolders();
     });
 
+    // CARREGAR PASTAS
     async function loadFolders() {
       const sel = document.getElementById("up-category");
       try {
         const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid));
         const snap = await getDocs(q);
-        const folders = new Set();
-        snap.docs.forEach(d => { if(d.data().category) folders.add(d.data().category); });
+        userFolders.clear();
+        snap.docs.forEach(d => { if(d.data().category) userFolders.add(d.data().category); });
         
         sel.innerHTML = '<option value="">Selecione uma pasta...</option>';
-        folders.forEach(f => { sel.innerHTML += `<option value="${f}">${f}</option>`; });
+        userFolders.forEach(f => { sel.innerHTML += `<option value="${f}">${f}</option>`; });
       } catch(e) {
         sel.innerHTML = '<option value="">Erro ao carregar pastas</option>';
       }
     }
 
+    // CRIAR NOVA PASTA NA HORA
     document.getElementById("btn-new-folder").addEventListener("click", () => {
       const nova = prompt("Escreva o nome da Nova Pasta/Categoria no site:");
       if (nova && nova.trim() !== "") {
+        const nomeFinal = nova.trim();
         const sel = document.getElementById("up-category");
-        sel.innerHTML += `<option value="${nova.trim()}">${nova.trim()}</option>`;
-        sel.value = nova.trim(); 
+        if(!userFolders.has(nomeFinal)) {
+            sel.innerHTML += `<option value="${nomeFinal}">${nomeFinal}</option>`;
+            userFolders.add(nomeFinal);
+        }
+        sel.value = nomeFinal; 
       }
     });
+
+    // ABRIR MODAL DE GERIR PASTAS
+    document.getElementById("btn-manage-folders").addEventListener("click", () => {
+      renderManageFolders();
+      document.getElementById("modal-folders").classList.add("active");
+    });
+
+    // FECHAR MODAL DE GERIR PASTAS
+    document.getElementById("modal-folders-close").addEventListener("click", () => {
+      document.getElementById("modal-folders").classList.remove("active");
+    });
+
+    // RENDERIZAR LISTA NO MODAL DE PASTAS
+    function renderManageFolders() {
+      const list = document.getElementById("folders-list");
+      list.innerHTML = "";
+      
+      if(userFolders.size === 0) {
+        list.innerHTML = `<span style="color:var(--white-faint); font-size:13px; text-align:center;">Não existem pastas.</span>`;
+        return;
+      }
+
+      userFolders.forEach(folder => {
+        const div = document.createElement("div");
+        div.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--black-3); padding:10px 14px; border:1px solid var(--black-5); border-radius:3px;";
+        
+        div.innerHTML = `
+          <strong style="font-size:13px;">${folder}</strong>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-secondary btn-rename" data-name="${folder}" style="padding:6px 10px; font-size:10px;">Renomear</button>
+            <button class="btn-danger btn-delete-folder" data-name="${folder}" style="padding:6px 10px; font-size:10px;">Excluir</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      // Lógica de Renomear
+      document.querySelectorAll(".btn-rename").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          const oldName = e.target.getAttribute("data-name");
+          const newName = prompt(`Qual será o novo nome para "${oldName}"?`);
+          
+          if(newName && newName.trim() !== "" && newName.trim() !== oldName) {
+            const btnOriginalText = e.target.textContent;
+            e.target.textContent = "...";
+            e.target.disabled = true;
+            try {
+              // Procura todas as fotos desta pasta e altera o nome
+              const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid), where("category", "==", oldName));
+              const snap = await getDocs(q);
+              const promises = snap.docs.map(d => updateDoc(doc(db, "photos", d.id), { category: newName.trim() }));
+              await Promise.all(promises);
+              
+              alert("Pasta renomeada com sucesso!");
+              await loadFolders();
+              renderManageFolders();
+              if(document.getElementById("tab-minhas").classList.contains("active")) loadMyPhotos();
+            } catch(err) {
+              alert("Erro ao renomear pasta.");
+              e.target.textContent = btnOriginalText;
+              e.target.disabled = false;
+            }
+          }
+        });
+      });
+
+      // Lógica de Excluir Pasta
+      document.querySelectorAll(".btn-delete-folder").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          const folderName = e.target.getAttribute("data-name");
+          const confirmacao = confirm(`ATENÇÃO!\nTem certeza que deseja excluir a categoria "${folderName}" e TODAS as fotografias que pertencem a ela do site?\n\n(As fotos não serão apagadas do Google Drive, apenas removerá do site).`);
+          
+          if(confirmacao) {
+            const btnOriginalText = e.target.textContent;
+            e.target.textContent = "...";
+            e.target.disabled = true;
+            try {
+              // Procura todas as fotos desta pasta e apaga
+              const q = query(collection(db, "photos"), where("authorId", "==", currentUser.uid), where("category", "==", folderName));
+              const snap = await getDocs(q);
+              const promises = snap.docs.map(d => deleteDoc(doc(db, "photos", d.id)));
+              await Promise.all(promises);
+              
+              alert("Pasta e fotos excluídas do site com sucesso!");
+              await loadFolders();
+              renderManageFolders();
+              if(document.getElementById("tab-minhas").classList.contains("active")) loadMyPhotos();
+            } catch(err) {
+              alert("Erro ao excluir pasta.");
+              e.target.textContent = btnOriginalText;
+              e.target.disabled = false;
+            }
+          }
+        });
+      });
+    }
 
     document.getElementById("btn-logout").addEventListener("click", async () => {
       await signOut(auth);
@@ -168,16 +289,20 @@
       });
     });
 
+    // INPUT DE FICHEIRO BONITO E PREVIEW
     document.getElementById("up-file").addEventListener("change", (e) => {
       selectedFiles = Array.from(e.target.files);
       const grid = document.getElementById("preview-grid");
       const area = document.getElementById("preview-area");
+      const label = document.getElementById("file-label");
       
       grid.innerHTML = "";
       document.getElementById("preview-count").textContent = selectedFiles.length;
 
       if (selectedFiles.length > 0) {
         area.style.display = "block";
+        label.innerHTML = `<span style="color:var(--red-light); font-weight:bold;">✓ ${selectedFiles.length} foto(s) selecionada(s)</span>`;
+        
         selectedFiles.forEach(file => {
           const reader = new FileReader();
           reader.onload = (evt) => {
@@ -190,6 +315,7 @@
         });
       } else {
         area.style.display = "none";
+        label.innerHTML = `📁 Clique aqui para escolher os arquivos...`;
       }
     });
 
@@ -202,6 +328,7 @@
       });
     };
 
+    // UPLOAD EM LOTE LENTO MAS SEGURO
     document.getElementById("btn-publish").addEventListener("click", async () => {
       const titleBase = document.getElementById("up-title").value.trim();
       const category = document.getElementById("up-category").value;
@@ -221,7 +348,7 @@
 
         for (let i = 0; i < selectedFiles.length; i++) {
           const file = selectedFiles[i];
-          btn.textContent = `A Enviar Foto ${i + 1} de ${selectedFiles.length}...`;
+          btn.textContent = `A Enviar Foto ${i + 1} de ${selectedFiles.length}... (Aguarde)`;
           
           const title = selectedFiles.length > 1 ? `${titleBase} (${i + 1}/${selectedFiles.length})` : titleBase;
           const base64Data = await readFileAsBase64(file);
@@ -233,7 +360,7 @@
               base64: base64Data,
               fileName: file.name,
               mimeType: file.type,
-              authorName: currentUser.displayName || currentUser.email // ENVIANDO NOME DO FOTÓGRAFO
+              authorName: currentUser.displayName || currentUser.email 
             })
           });
 
@@ -262,6 +389,7 @@
         document.getElementById("up-file").value = "";
         selectedFiles = [];
         document.getElementById("preview-area").style.display = "none";
+        document.getElementById("file-label").innerHTML = `📁 Clique aqui para escolher os arquivos...`;
         
         loadFolders();
 
